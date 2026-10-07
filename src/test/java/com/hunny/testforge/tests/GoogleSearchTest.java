@@ -22,8 +22,8 @@ public class GoogleSearchTest extends BaseTest {
         System.out.println("Page title: " + title);
 
         Assert.assertTrue(
-        false,
-        "Temporary failure to verify screenshot capture"
-);
+                title != null && !title.isEmpty(),
+                "Page title should not be empty"
+        );
     }
 }
