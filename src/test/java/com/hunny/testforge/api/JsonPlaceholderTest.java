@@ -15,17 +15,17 @@ public class JsonPlaceholderTest extends ApiBaseTest {
     public void getUserDetails() {
 
         Response response =
-        given()
-                .spec(requestSpecification)
-                .pathParam("id", 1)
-                .when()
-                .get(ApiEndpoints.USER_BY_ID)
-                .then()
-                .log()
-                .ifValidationFails(LogDetail.ALL)
-                .spec(ApiResponseSpecification.successResponse())
-                .extract()
-                .response();
+                given()
+                        .spec(requestSpecification)
+                        .pathParam("id", 1)
+                        .when()
+                        .get(ApiEndpoints.USER_BY_ID)
+                        .then()
+                        .log()
+                        .ifValidationFails()
+                        .spec(ApiResponseSpecification.successResponse())
+                        .extract()
+                        .response();
 
         System.out.println("Status Code: " + response.getStatusCode());
         System.out.println("Response Body: " + response.asString());
