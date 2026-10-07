@@ -21,8 +21,6 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                         .when()
                         .get(ApiEndpoints.USER_BY_ID)
                         .then()
-                        .log()
-                        .ifValidationFails()
                         .spec(ApiResponseSpecification.successResponse())
                         .extract()
                         .response();
