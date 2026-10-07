@@ -1,40 +1,23 @@
 package com.hunny.testforge.tests;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import com.hunny.testforge.base.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class GoogleSearchTest {
+public class GoogleSearchTest extends BaseTest {
 
     @Test
     public void openGoogle() {
 
-        ChromeOptions options = new ChromeOptions();
+        driver.get("https://www.google.com");
 
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--window-size=1920,1080");
+        String title = driver.getTitle();
 
-        WebDriver driver = new ChromeDriver(options);
+        System.out.println("Page title: " + title);
 
-        try {
-            driver.get("https://www.google.com");
-
-            String title = driver.getTitle();
-
-            System.out.println("Page title: " + title);
-
-            Assert.assertTrue(
-                    title != null && !title.isEmpty(),
-                    "Page title should not be empty"
-            );
-
-        } finally {
-            driver.quit();
-        }
+        Assert.assertTrue(
+                title != null && !title.isEmpty(),
+                "Page title should not be empty"
+        );
     }
 }
