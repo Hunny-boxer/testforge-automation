@@ -1,6 +1,7 @@
 package com.hunny.testforge.tests;
 
 import com.hunny.testforge.base.BaseTest;
+import com.hunny.testforge.pages.GooglePage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -9,9 +10,11 @@ public class GoogleSearchTest extends BaseTest {
     @Test
     public void openGoogle() {
 
-        driver.get("https://www.google.com");
+        GooglePage googlePage = new GooglePage(driver);
 
-        String title = driver.getTitle();
+        googlePage.open();
+
+        String title = googlePage.getPageTitle();
 
         System.out.println("Page title: " + title);
 
