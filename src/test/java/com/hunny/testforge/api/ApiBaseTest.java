@@ -1,6 +1,7 @@
 package com.hunny.testforge.api;
 
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.filter.log.LogDetail;
 import io.restassured.specification.RequestSpecification;
 import org.testng.annotations.BeforeClass;
 
