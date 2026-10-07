@@ -9,15 +9,17 @@ import org.testng.annotations.Test;
 import static io.restassured.RestAssured.given;
 
 @Listeners(ExtentTestListener.class)
-public class JsonPlaceholderTest {
+public class JsonPlaceholderTest extends ApiBaseTest {
 
     @Test
     public void getUserDetails() {
 
         Response response =
                 given()
+                        .spec(requestSpecification)
+                        .pathParam("id", 1)
                         .when()
-                        .get("https://jsonplaceholder.typicode.com/users/1");
+                        .get(ApiEndpoints.USER_BY_ID);
 
         System.out.println("Status Code: " + response.getStatusCode());
         System.out.println("Response Body: " + response.asString());
