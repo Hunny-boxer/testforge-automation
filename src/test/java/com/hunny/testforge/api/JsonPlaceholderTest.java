@@ -7,6 +7,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 
 @Listeners(ExtentTestListener.class)
 public class JsonPlaceholderTest extends ApiBaseTest {
@@ -22,6 +23,11 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                         .get(ApiEndpoints.USER_BY_ID)
                         .then()
                         .spec(ApiResponseSpecification.successResponse())
+                        .body(
+                                matchesJsonSchemaInClasspath(
+                                        "schemas/user-schema.json"
+                                )
+                        )
                         .extract()
                         .response();
 
