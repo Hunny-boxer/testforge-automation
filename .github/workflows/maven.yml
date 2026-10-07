@@ -31,9 +31,16 @@ jobs:
 
       - name: Verify Java
         run: java -version
+        
 
       - name: Verify Maven
         run: mvn -version
 
       - name: Run Maven tests
         run: mvn -B clean test
+      - name: Upload Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report
+          path: test-output/ExtentReport.html
