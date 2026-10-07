@@ -2,9 +2,12 @@ package com.hunny.testforge.tests;
 
 import com.hunny.testforge.base.BaseTest;
 import com.hunny.testforge.pages.GooglePage;
+import com.hunny.testforge.reporting.ExtentTestListener;
 import org.testng.Assert;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+@Listeners(ExtentTestListener.class)
 public class GoogleSearchTest extends BaseTest {
 
     @Test
