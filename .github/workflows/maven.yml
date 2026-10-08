@@ -7,7 +7,10 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+
+  # Full Test Suite
+  full-test:
+    name: Full Test Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -31,16 +34,86 @@ jobs:
 
       - name: Verify Java
         run: java -version
-        
 
       - name: Verify Maven
         run: mvn -version
 
-      - name: Run Maven tests
+      - name: Run Full Test Suite
         run: mvn -B clean test
+
       - name: Upload Extent Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: extent-report
+          name: extent-report-full
+          path: test-output/ExtentReport.html
+
+
+  # Smoke Test Suite
+  smoke-test:
+    name: Smoke Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Verify Chrome
+        run: google-chrome --version
+
+      - name: Run Smoke Tests
+        run: mvn -B clean test -Psmoke
+
+      - name: Upload Smoke Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-smoke
+          path: test-output/ExtentReport.html
+
+
+  # Regression Test Suite
+  regression-test:
+    name: Regression Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Verify Chrome
+        run: google-chrome --version
+
+      - name: Run Regression Tests
+        run: mvn -B clean test -Pregression
+
+      - name: Upload Regression Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-regression
           path: test-output/ExtentReport.html
