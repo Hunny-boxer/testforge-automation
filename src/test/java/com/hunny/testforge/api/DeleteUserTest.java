@@ -19,7 +19,11 @@ public class DeleteUserTest extends ApiBaseTest {
                         .spec(requestSpecification)
                         .pathParam("id", 1)
                         .when()
-                        .delete(ApiEndpoints.USER_BY_ID);
+                        .delete(ApiEndpoints.USER_BY_ID)
+                        .then()
+                        .spec(ApiResponseSpecification.successResponse())
+                        .extract()
+                        .response();
 
         System.out.println("Status Code: " + response.getStatusCode());
         System.out.println("Response Body: " + response.asString());
