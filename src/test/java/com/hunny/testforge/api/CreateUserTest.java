@@ -12,7 +12,7 @@ import static io.restassured.RestAssured.given;
 @Listeners(ExtentTestListener.class)
 public class CreateUserTest extends ApiBaseTest {
 
-    @Test
+    @Test(groups = {"API", "REGRESSION"})
     public void createUser() {
 
         String requestBody =
@@ -25,8 +25,13 @@ public class CreateUserTest extends ApiBaseTest {
                         .when()
                         .post(ApiEndpoints.USERS);
 
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Body: " + response.asString());
+        System.out.println(
+                "Status Code: " + response.getStatusCode()
+        );
+
+        System.out.println(
+                "Response Body: " + response.asString()
+        );
 
         Assert.assertEquals(
                 response.getStatusCode(),
