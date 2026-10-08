@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 @Listeners(ExtentTestListener.class)
 public class GoogleSearchTest extends BaseTest {
 
-    @Test
+    @Test(groups = {"UI", "SMOKE"})
     public void openGoogle() {
 
         GooglePage googlePage = new GooglePage(driver);
@@ -19,7 +19,9 @@ public class GoogleSearchTest extends BaseTest {
 
         String title = googlePage.getPageTitle();
 
-        System.out.println("Page title: " + title);
+        System.out.println(
+                "Page title: " + title
+        );
 
         Assert.assertTrue(
                 title != null && !title.isEmpty(),
