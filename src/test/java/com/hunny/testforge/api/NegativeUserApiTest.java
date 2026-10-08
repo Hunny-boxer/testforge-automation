@@ -3,6 +3,7 @@ package com.hunny.testforge.api;
 import com.hunny.testforge.reporting.ExtentTestListener;
 import io.restassured.response.Response;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -11,23 +12,37 @@ import static io.restassured.RestAssured.given;
 @Listeners(ExtentTestListener.class)
 public class NegativeUserApiTest extends ApiBaseTest {
 
-    @Test
-    public void getNonExistingUser() {
+    @DataProvider(name = "invalidUserIds")
+    public Object[][] invalidUserIds() {
+        return new Object[][]{
+                {9999},
+                {99999},
+                {123456}
+        };
+    }
+
+    @Test(dataProvider = "invalidUserIds")
+    public void getNonExistingUser(int userId) {
 
         Response response =
                 given()
                         .spec(requestSpecification)
-                        .pathParam("id", 9999)
+                        .pathParam("id", userId)
                         .when()
                         .get(ApiEndpoints.USER_BY_ID);
 
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Body: " + response.asString());
+        System.out.println(
+                "Testing invalid user ID: " + userId
+        );
+
+        System.out.println(
+                "Status Code: " + response.getStatusCode()
+        );
 
         Assert.assertEquals(
                 response.getStatusCode(),
                 404,
-                "Expected HTTP status code 404 for non-existing user"
+                "Expected HTTP 404 for user ID: " + userId
         );
     }
 }
