@@ -1,6 +1,7 @@
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
+import com.hunny.testforge.utils.TestDataReader;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Listeners;
@@ -14,14 +15,8 @@ public class UpdateUserTest extends ApiBaseTest {
     @Test
     public void updateUser() {
 
-        String requestBody = """
-                {
-                    "id": 1,
-                    "name": "Hunny Boxer Updated",
-                    "username": "hunny_updated",
-                    "email": "hunny.updated@example.com"
-                }
-                """;
+        String requestBody =
+                TestDataReader.readJsonFile("testdata/update-user.json");
 
         Response response =
                 given()
