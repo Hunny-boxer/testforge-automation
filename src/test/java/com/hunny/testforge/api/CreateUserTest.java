@@ -1,6 +1,7 @@
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
+import com.hunny.testforge.utils.TestDataReader;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Listeners;
@@ -14,13 +15,8 @@ public class CreateUserTest extends ApiBaseTest {
     @Test
     public void createUser() {
 
-        String requestBody = """
-                {
-                    "name": "Hunny Boxer",
-                    "username": "hunnyboxer",
-                    "email": "hunny@example.com"
-                }
-                """;
+        String requestBody =
+                TestDataReader.readJsonFile("testdata/create-user.json");
 
         Response response =
                 given()
