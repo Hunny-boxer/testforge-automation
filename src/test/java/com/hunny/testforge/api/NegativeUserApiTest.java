@@ -14,6 +14,7 @@ public class NegativeUserApiTest extends ApiBaseTest {
 
     @DataProvider(name = "invalidUserIds")
     public Object[][] invalidUserIds() {
+
         return new Object[][]{
                 {9999},
                 {99999},
@@ -21,7 +22,10 @@ public class NegativeUserApiTest extends ApiBaseTest {
         };
     }
 
-    @Test(dataProvider = "invalidUserIds")
+    @Test(
+            dataProvider = "invalidUserIds",
+            groups = {"API", "NEGATIVE"}
+    )
     public void getNonExistingUser(int userId) {
 
         Response response =
@@ -39,10 +43,14 @@ public class NegativeUserApiTest extends ApiBaseTest {
                 "Status Code: " + response.getStatusCode()
         );
 
+        System.out.println(
+                "Response Body: " + response.asString()
+        );
+
         Assert.assertEquals(
                 response.getStatusCode(),
                 404,
-                "Expected HTTP 404 for user ID: " + userId
+                "Expected HTTP 404 for non-existing user ID: " + userId
         );
     }
 }
