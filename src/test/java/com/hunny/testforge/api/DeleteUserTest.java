@@ -11,7 +11,7 @@ import static io.restassured.RestAssured.given;
 @Listeners(ExtentTestListener.class)
 public class DeleteUserTest extends ApiBaseTest {
 
-    @Test
+    @Test(groups = {"API", "REGRESSION"})
     public void deleteUser() {
 
         Response response =
@@ -25,8 +25,13 @@ public class DeleteUserTest extends ApiBaseTest {
                         .extract()
                         .response();
 
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Body: " + response.asString());
+        System.out.println(
+                "Status Code: " + response.getStatusCode()
+        );
+
+        System.out.println(
+                "Response Body: " + response.asString()
+        );
 
         Assert.assertEquals(
                 response.getStatusCode(),
