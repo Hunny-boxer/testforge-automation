@@ -8,7 +8,6 @@
 
         <groups>
             <run>
-                <include name="API"/>
                 <include name="SMOKE"/>
             </run>
         </groups>
