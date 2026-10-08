@@ -21,13 +21,25 @@ public class ExtentReportManager {
         extent.attachReporter(sparkReporter);
 
         extent.setSystemInfo("Project", "TestForge Automation");
-        extent.setSystemInfo("Framework", "Selenium + TestNG");
+        extent.setSystemInfo("Framework", "Selenium + TestNG + REST Assured");
         extent.setSystemInfo("Language", "Java");
         extent.setSystemInfo("Browser", "Chrome");
+        extent.setSystemInfo("Environment", "QA");
+        extent.setSystemInfo("Author", "Hunny");
     }
 
     public static void createTest(String testName) {
-        test.set(extent.createTest(testName));
+        createTest(testName, "Uncategorized");
+    }
+
+    public static void createTest(String testName, String category) {
+
+        ExtentTest extentTest = extent.createTest(testName);
+
+        extentTest.assignCategory(category);
+        extentTest.assignAuthor("Hunny");
+
+        test.set(extentTest);
     }
 
     public static ExtentTest getTest() {
