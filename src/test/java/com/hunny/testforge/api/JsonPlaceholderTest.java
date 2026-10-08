@@ -12,7 +12,7 @@ import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInC
 @Listeners(ExtentTestListener.class)
 public class JsonPlaceholderTest extends ApiBaseTest {
 
-    @Test
+    @Test(groups = {"API", "SMOKE"})
     public void getUserDetails() {
 
         Response response =
@@ -23,16 +23,19 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                         .get(ApiEndpoints.USER_BY_ID)
                         .then()
                         .spec(ApiResponseSpecification.successResponse())
-                        .body(
-                                matchesJsonSchemaInClasspath(
-                                        "schemas/user-schema.json"
-                                )
-                        )
+                        .body(matchesJsonSchemaInClasspath(
+                                "schemas/user-schema.json"
+                        ))
                         .extract()
                         .response();
 
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Body: " + response.asString());
+        System.out.println(
+                "Status Code: " + response.getStatusCode()
+        );
+
+        System.out.println(
+                "Response Body: " + response.asString()
+        );
 
         Assert.assertEquals(
                 response.getStatusCode(),
