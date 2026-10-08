@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="TestForge Automation Suite">
+
+    <test name="Smoke Tests">
+
+        <groups>
+            <run>
+                <include name="SMOKE"/>
+            </run>
+        </groups>
+
+        <packages>
+            <package name="com.hunny.testforge"/>
+        </packages>
+
+    </test>
+
+</suite>
