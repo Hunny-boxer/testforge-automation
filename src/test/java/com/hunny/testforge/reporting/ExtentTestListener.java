@@ -10,7 +10,19 @@ public class ExtentTestListener implements ITestListener {
 
     @Override
     public void onTestStart(ITestResult result) {
-        ExtentReportManager.createTest(result.getMethod().getMethodName());
+
+        String packageName = result.getTestClass()
+                .getRealClass()
+                .getPackageName();
+
+        String category = packageName.contains(".api")
+                ? "API"
+                : "UI";
+
+        ExtentReportManager.createTest(
+                result.getMethod().getMethodName(),
+                category
+        );
     }
 
     @Override
@@ -24,6 +36,7 @@ public class ExtentTestListener implements ITestListener {
         ExtentReportManager.getTest().fail(result.getThrowable());
 
         try {
+
             TakesScreenshot screenshot =
                     (TakesScreenshot) DriverFactory.getDriver();
 
@@ -36,8 +49,10 @@ public class ExtentTestListener implements ITestListener {
             );
 
         } catch (Exception e) {
+
             ExtentReportManager.getTest().warning(
-                    "Could not capture failure screenshot: " + e.getMessage()
+                    "Could not capture failure screenshot: "
+                            + e.getMessage()
             );
         }
     }
