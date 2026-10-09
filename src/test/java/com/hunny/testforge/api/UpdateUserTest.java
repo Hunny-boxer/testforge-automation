@@ -1,4 +1,3 @@
-
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -25,7 +24,11 @@ public class UpdateUserTest extends ApiBaseTest {
                         .pathParam("id", 1)
                         .body(requestBody)
                         .when()
-                        .put(ApiEndpoints.USER_BY_ID);
+                        .put(ApiEndpoints.USER_BY_ID)
+                        .then()
+                        .spec(ApiResponseSpecification.successResponse(200))
+                        .extract()
+                        .response();
 
         System.out.println(
                 "Status Code: " + response.getStatusCode()
@@ -33,12 +36,6 @@ public class UpdateUserTest extends ApiBaseTest {
 
         System.out.println(
                 "Response Body: " + response.asString()
-        );
-
-        Assert.assertEquals(
-                response.getStatusCode(),
-                200,
-                "Expected HTTP status code 200"
         );
 
         Assert.assertEquals(
