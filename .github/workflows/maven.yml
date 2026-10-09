@@ -1,16 +1,7 @@
-name: TestForge Automation
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
-
-  # Full Test Suite
-  full-test:
-    name: Full Test Suite
+  # API Performance Test Suite
+  api-performance-test:
+    name: API Performance Test Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -24,156 +15,12 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
+      - name: Run API Performance Tests
+        run: mvn -B clean test -Papi-performance
 
-      - name: Verify Chrome
-        run: google-chrome --version
-
-      - name: Verify Java
-        run: java -version
-
-      - name: Verify Maven
-        run: mvn -version
-
-      - name: Run Full Test Suite
-        run: mvn -B clean test
-
-      - name: Upload Full Extent Report
+      - name: Upload API Performance Extent Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: extent-report-full
-          path: test-output/ExtentReport.html
-
-
-  # Smoke Test Suite
-  smoke-test:
-    name: Smoke Test Suite
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
-      - name: Verify Chrome
-        run: google-chrome --version
-
-      - name: Run Smoke Tests
-        run: mvn -B clean test -Psmoke
-
-      - name: Upload Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-smoke
-          path: test-output/ExtentReport.html
-
-
-  # Regression Test Suite
-  regression-test:
-    name: Regression Test Suite
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
-      - name: Verify Chrome
-        run: google-chrome --version
-
-      - name: Run Regression Tests
-        run: mvn -B clean test -Pregression
-
-      - name: Upload Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-regression
-          path: test-output/ExtentReport.html
-
-
-  # API Smoke Test Suite
-  api-smoke-test:
-    name: API Smoke Test Suite
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Verify Java
-        run: java -version
-
-      - name: Run API Smoke Tests
-        run: mvn -B clean test -Papi-smoke
-
-      - name: Upload API Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-smoke
-          path: test-output/ExtentReport.html
-
-
-  # API Regression Test Suite
-  api-regression-test:
-    name: API Regression Test Suite
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Verify Java
-        run: java -version
-
-      - name: Run API Regression Tests
-        run: mvn -B clean test -Papi-regression
-
-      - name: Upload API Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-regression
+          name: extent-report-api-performance
           path: test-output/ExtentReport.html
