@@ -24,13 +24,13 @@ public class GetUnknownUserTest extends ApiBaseTest {
 
         Assert.assertEquals(
                 response.getStatusCode(),
-                200,
-                "JSONPlaceholder returns HTTP 200 for unknown user IDs"
+                404,
+                "Expected HTTP 404 for an unknown user ID"
         );
 
         Assert.assertTrue(
-                response.asString().trim().equals("{}")
-                        || response.asString().trim().isEmpty(),
+                response.asString().trim().isEmpty()
+                        || response.asString().trim().equals("{}"),
                 "Unknown user response should contain no user data"
         );
     }
