@@ -21,10 +21,13 @@ public class CreateUserTest extends ApiBaseTest {
         Response response =
                 given()
                         .spec(getRequestSpecification())
-                        .spec(ApiResponseSpecification.successResponse(201))
                         .body(requestBody)
                         .when()
-                        .post(ApiEndpoints.USERS);
+                        .post(ApiEndpoints.USERS)
+                        .then()
+                        .spec(ApiResponseSpecification.successResponse(201))
+                        .extract()
+                        .response();
 
         System.out.println(
                 "Status Code: " + response.getStatusCode()
