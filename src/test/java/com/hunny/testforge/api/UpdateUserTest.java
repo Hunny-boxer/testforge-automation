@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -8,6 +9,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 
 @Listeners(ExtentTestListener.class)
 public class UpdateUserTest extends ApiBaseTest {
@@ -27,15 +29,19 @@ public class UpdateUserTest extends ApiBaseTest {
                         .put(ApiEndpoints.USER_BY_ID)
                         .then()
                         .spec(ApiResponseSpecification.successResponse(200))
+                        .body(matchesJsonSchemaInClasspath(
+                                "schemas/update-user-schema.json"
+                        ))
                         .extract()
                         .response();
 
-        System.out.println(
-                "Status Code: " + response.getStatusCode()
-        );
+        System.out.println("Status Code: " + response.getStatusCode());
+        System.out.println("Response Body: " + response.asString());
 
-        System.out.println(
-                "Response Body: " + response.asString()
+        Assert.assertEquals(
+                response.jsonPath().getInt("id"),
+                1,
+                "Updated user ID should match"
         );
 
         Assert.assertEquals(
