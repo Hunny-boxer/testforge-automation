@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -16,7 +17,7 @@ public class DeleteUserTest extends ApiBaseTest {
 
         Response response =
                 given()
-                        .spec(requestSpecification)
+                        .spec(getRequestSpecification())
                         .pathParam("id", 1)
                         .when()
                         .delete(ApiEndpoints.USER_BY_ID)
