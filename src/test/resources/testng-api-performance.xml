@@ -1,0 +1,16 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="TestForge API Performance Suite">
+    <test name="API Response Time Tests">
+        <groups>
+            <run>
+                <include name="PERFORMANCE"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.hunny.testforge.api"/>
+        </packages>
+    </test>
+</suite>
