@@ -1,4 +1,3 @@
-
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -22,6 +21,7 @@ public class CreateUserTest extends ApiBaseTest {
         Response response =
                 given()
                         .spec(getRequestSpecification())
+                        .spec(ApiResponseSpecification.successResponse(201))
                         .body(requestBody)
                         .when()
                         .post(ApiEndpoints.USERS);
@@ -32,12 +32,6 @@ public class CreateUserTest extends ApiBaseTest {
 
         System.out.println(
                 "Response Body: " + response.asString()
-        );
-
-        Assert.assertEquals(
-                response.getStatusCode(),
-                201,
-                "Expected HTTP status code 201"
         );
 
         Assert.assertEquals(
