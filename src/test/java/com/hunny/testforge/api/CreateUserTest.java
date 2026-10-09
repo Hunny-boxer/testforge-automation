@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -20,7 +21,7 @@ public class CreateUserTest extends ApiBaseTest {
 
         Response response =
                 given()
-                        .spec(requestSpecification)
+                        .spec(getRequestSpecification())
                         .body(requestBody)
                         .when()
                         .post(ApiEndpoints.USERS);
