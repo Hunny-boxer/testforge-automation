@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -8,6 +9,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 
 @Listeners(ExtentTestListener.class)
 public class CreateUserTest extends ApiBaseTest {
@@ -26,16 +28,14 @@ public class CreateUserTest extends ApiBaseTest {
                         .post(ApiEndpoints.USERS)
                         .then()
                         .spec(ApiResponseSpecification.successResponse(201))
+                        .body(matchesJsonSchemaInClasspath(
+                                "schemas/create-user-schema.json"
+                        ))
                         .extract()
                         .response();
 
-        System.out.println(
-                "Status Code: " + response.getStatusCode()
-        );
-
-        System.out.println(
-                "Response Body: " + response.asString()
-        );
+        System.out.println("Status Code: " + response.getStatusCode());
+        System.out.println("Response Body: " + response.asString());
 
         Assert.assertEquals(
                 response.jsonPath().getString("name"),
@@ -50,7 +50,7 @@ public class CreateUserTest extends ApiBaseTest {
         );
 
         Assert.assertNotNull(
-                response.jsonPath().getString("id"),
+                response.jsonPath().get("id"),
                 "Created user ID should not be null"
         );
     }
