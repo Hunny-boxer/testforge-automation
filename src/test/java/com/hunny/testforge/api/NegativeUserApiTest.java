@@ -1,3 +1,4 @@
+```java
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -14,7 +15,6 @@ public class NegativeUserApiTest extends ApiBaseTest {
 
     @DataProvider(name = "invalidUserIds")
     public Object[][] invalidUserIds() {
-
         return new Object[][]{
                 {9999},
                 {99999},
@@ -30,7 +30,7 @@ public class NegativeUserApiTest extends ApiBaseTest {
 
         Response response =
                 given()
-                        .spec(requestSpecification)
+                        .spec(getRequestSpecification())
                         .pathParam("id", userId)
                         .when()
                         .get(ApiEndpoints.USER_BY_ID);
@@ -52,5 +52,12 @@ public class NegativeUserApiTest extends ApiBaseTest {
                 404,
                 "Expected HTTP 404 for non-existing user ID: " + userId
         );
+
+        Assert.assertTrue(
+                response.asString().trim().isEmpty()
+                        || response.asString().trim().equals("{}"),
+                "Expected an empty response for invalid user ID: " + userId
+        );
     }
 }
+```
