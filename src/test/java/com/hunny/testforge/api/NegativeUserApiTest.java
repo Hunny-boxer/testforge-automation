@@ -1,4 +1,3 @@
-```java
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -35,17 +34,9 @@ public class NegativeUserApiTest extends ApiBaseTest {
                         .when()
                         .get(ApiEndpoints.USER_BY_ID);
 
-        System.out.println(
-                "Testing invalid user ID: " + userId
-        );
-
-        System.out.println(
-                "Status Code: " + response.getStatusCode()
-        );
-
-        System.out.println(
-                "Response Body: " + response.asString()
-        );
+        System.out.println("Testing invalid user ID: " + userId);
+        System.out.println("Status Code: " + response.getStatusCode());
+        System.out.println("Response Body: " + response.asString());
 
         Assert.assertEquals(
                 response.getStatusCode(),
@@ -60,4 +51,3 @@ public class NegativeUserApiTest extends ApiBaseTest {
         );
     }
 }
-```
