@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.base.ReportingBaseTest;
@@ -14,10 +15,19 @@ public class ApiBaseTest extends ReportingBaseTest {
 
     @BeforeClass
     public void setupApi() {
-
         enableLoggingOfRequestAndResponseIfValidationFails();
+        requestSpecification = buildRequestSpecification();
+    }
 
-        requestSpecification = new RequestSpecBuilder()
+    protected RequestSpecification getRequestSpecification() {
+        if (requestSpecification == null) {
+            requestSpecification = buildRequestSpecification();
+        }
+        return requestSpecification;
+    }
+
+    private RequestSpecification buildRequestSpecification() {
+        return new RequestSpecBuilder()
                 .setBaseUri(ApiEndpoints.BASE_URL)
                 .setContentType(JSON)
                 .build();
