@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -17,7 +18,7 @@ public class JsonPlaceholderTest extends ApiBaseTest {
 
         Response response =
                 given()
-                        .spec(requestSpecification)
+                        .spec(getRequestSpecification())
                         .pathParam("id", 1)
                         .when()
                         .get(ApiEndpoints.USER_BY_ID)
