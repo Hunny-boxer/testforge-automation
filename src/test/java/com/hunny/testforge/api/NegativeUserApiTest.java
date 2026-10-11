@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.api;
 
 import com.hunny.testforge.reporting.ExtentTestListener;
@@ -15,17 +16,18 @@ public class NegativeUserApiTest extends ApiBaseTest {
     @DataProvider(name = "invalidUserIds")
     public Object[][] invalidUserIds() {
         return new Object[][]{
-                {9999},
-                {99999},
-                {123456}
+                {"9999"},
+                {"99999"},
+                {"123456"},
+                {"not-a-number"}
         };
     }
 
     @Test(
             dataProvider = "invalidUserIds",
-            groups = {"API", "NEGATIVE"}
+            groups = {"API", "REGRESSION", "NEGATIVE"}
     )
-    public void getNonExistingUser(int userId) {
+    public void getNonExistingUser(String userId) {
 
         Response response =
                 given()
@@ -34,19 +36,20 @@ public class NegativeUserApiTest extends ApiBaseTest {
                         .when()
                         .get(ApiEndpoints.USER_BY_ID);
 
+        String responseBody = response.asString().trim();
+
         System.out.println("Testing invalid user ID: " + userId);
         System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Body: " + response.asString());
+        System.out.println("Response Body: " + responseBody);
 
         Assert.assertEquals(
                 response.getStatusCode(),
                 404,
-                "Expected HTTP 404 for non-existing user ID: " + userId
+                "Expected HTTP 404 for invalid user ID: " + userId
         );
 
         Assert.assertTrue(
-                response.asString().trim().isEmpty()
-                        || response.asString().trim().equals("{}"),
+                responseBody.isEmpty() || responseBody.equals("{}"),
                 "Expected an empty response for invalid user ID: " + userId
         );
     }
