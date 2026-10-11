@@ -1,7 +1,8 @@
-
 package com.hunny.testforge.api;
 
+import com.hunny.testforge.reporting.ExtentReportManager;
 import com.hunny.testforge.reporting.ExtentTestListener;
+import com.aventstack.extentreports.ExtentTest;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -44,22 +45,54 @@ public class ApiResponseTimeTest extends ApiBaseTest {
         long responseTimeMs =
                 response.getTimeIn(TimeUnit.MILLISECONDS);
 
-        System.out.println("Scenario: " + scenario);
-        System.out.println("Endpoint: " + endpoint);
-        System.out.println("Status Code: " + response.getStatusCode());
-        System.out.println("Response Time: " + responseTimeMs + " ms");
+        int statusCode = response.getStatusCode();
 
+        // Keep the details in the Maven console.
+        System.out.println("Scenario: " + scenario);
+        System.out.println("Method: GET");
+        System.out.println("Endpoint: " + endpoint);
+        System.out.println("Status Code: " + statusCode);
+        System.out.println("Response Time: " + responseTimeMs + " ms");
+        System.out.println(
+                "Response Time Limit: " + MAX_RESPONSE_TIME_MS + " ms"
+        );
+
+        // Also add the details to the ExtentReport HTML test entry.
+        ExtentTest extentTest = ExtentReportManager.getTest();
+
+        if (extentTest != null) {
+            extentTest.info("Scenario: " + scenario);
+            extentTest.info("Request Method: GET");
+            extentTest.info("Endpoint: " + endpoint);
+            extentTest.info("HTTP Status Code: " + statusCode);
+            extentTest.info(
+                    "Actual Response Time: " + responseTimeMs + " ms"
+            );
+            extentTest.info(
+                    "Maximum Allowed Response Time: "
+                            + MAX_RESPONSE_TIME_MS + " ms"
+            );
+        }
+
+        // Validate the HTTP response.
         Assert.assertEquals(
-                response.getStatusCode(),
+                statusCode,
                 200,
                 scenario + " should return HTTP 200"
         );
 
+        // Validate the response-time threshold.
         Assert.assertTrue(
                 responseTimeMs < MAX_RESPONSE_TIME_MS,
                 scenario + " took " + responseTimeMs
                         + " ms; expected less than "
                         + MAX_RESPONSE_TIME_MS + " ms"
         );
+
+        if (extentTest != null) {
+            extentTest.pass(
+                    "HTTP status and response-time checks passed."
+            );
+        }
     }
 }
