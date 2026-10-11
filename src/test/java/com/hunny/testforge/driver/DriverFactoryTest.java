@@ -1,10 +1,17 @@
 
 package com.hunny.testforge.driver;
 
+import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 public class DriverFactoryTest {
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanUpDriver() {
+        DriverFactory.quitDriver();
+    }
 
     @Test(groups = {"UNIT", "SMOKE"})
     public void shouldRejectUnsupportedBrowser() {
@@ -19,10 +26,26 @@ public class DriverFactoryTest {
         );
     }
 
+    @Test(groups = {"UNIT", "SMOKE"})
+    public void shouldInitializeChromeDriverSuccessfully() {
+        DriverFactory.initializeDriver("CHROME");
+
+        WebDriver driver = DriverFactory.getDriver();
+
+        Assert.assertNotNull(
+                driver,
+                "Chrome driver should be initialized"
+        );
+
+        Assert.assertTrue(
+                driver.getWindowHandle() != null
+                        && !driver.getWindowHandle().isEmpty(),
+                "Chrome should have an active browser window"
+        );
+    }
+
     @Test(groups = {"UNIT", "REGRESSION"})
     public void shouldReturnNullWhenDriverIsNotInitialized() {
-        DriverFactory.quitDriver();
-
         Assert.assertNull(
                 DriverFactory.getDriver(),
                 "Driver should be null when not initialized"
@@ -30,12 +53,16 @@ public class DriverFactoryTest {
     }
 
     @Test(groups = {"UNIT", "REGRESSION"})
-    public void shouldAllowCleanupWhenDriverIsNotInitialized() {
+    public void shouldQuitInitializedDriverSuccessfully() {
+        DriverFactory.initializeDriver("chrome");
+
+        Assert.assertNotNull(DriverFactory.getDriver());
+
         DriverFactory.quitDriver();
 
         Assert.assertNull(
                 DriverFactory.getDriver(),
-                "Cleanup should leave the driver null"
+                "Driver should be null after cleanup"
         );
     }
 }
