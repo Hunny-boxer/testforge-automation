@@ -28,7 +28,9 @@ jobs:
           chrome-version: stable
 
       - name: Run Full Test Suite
-        run: mvn -B clean test 2>&1 | tee testforge-maven.log
+        run: |
+          set -o pipefail
+          mvn -B clean test 2>&1 | tee testforge-maven.log
 
       - name: Publish Test Execution Summary
         if: always()
@@ -82,7 +84,7 @@ jobs:
               except (ET.ParseError, OSError, ValueError):
                   continue
 
-          # Fallback: read Maven console output if XML has no timings.
+          # Read the Maven console if XML reports contain no timings.
           if not response_times:
               try:
                   with open(
@@ -116,7 +118,6 @@ jobs:
 
           if response_times:
               average = sum(response_times) / len(response_times)
-
               summary.extend([
                   "| Metric | Result |",
                   "|---|---:|",
@@ -133,9 +134,7 @@ jobs:
               ])
 
           if not files:
-              summary.append(
-                  "_No Surefire XML reports were found._"
-              )
+              summary.append("_No Surefire XML reports were found._")
 
           with open(
               os.environ["GITHUB_STEP_SUMMARY"],
@@ -170,7 +169,7 @@ jobs:
           chrome-version: stable
 
       - name: Run Smoke Tests
-        run: mvn -B clean test -Psmoke
+        run: mvn -B clean test -Dtest=GoogleSearchTest
 
       - name: Upload Smoke Extent Report
         if: always()
@@ -197,7 +196,7 @@ jobs:
           chrome-version: stable
 
       - name: Run Regression Tests
-        run: mvn -B clean test -Pregression
+        run: mvn -B clean test -Dtest=GoogleSearchRegressionTest
 
       - name: Upload Regression Extent Report
         if: always()
