@@ -1,37 +1,4 @@
 
-name: TestForge Automation
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  full-test:
-    name: Full Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
-      - name: Run Full Test Suite
-        run: |
-          set -o pipefail
-          mvn -B clean test 2>&1 | tee testforge-maven.log
-
       - name: Publish Test Execution Summary
         if: always()
         run: |
@@ -41,80 +8,126 @@ jobs:
           import re
           import xml.etree.ElementTree as ET
 
-          files = glob.glob("target/surefire-reports/TEST-*.xml")
-          total = passed = failed = skipped = 0
-          response_times = []
+          log_text = ""
+          try:
+              with open(
+                  "testforge-maven.log",
+                  encoding="utf-8",
+                  errors="replace"
+              ) as log:
+                  log_text = log.read()
+          except OSError:
+              pass
 
-          for file in files:
-              try:
-                  root = ET.parse(file).getroot()
+          total = passed = failures = errors = skipped = 0
+          counts_found = False
+          xml_duration = 0.0
+          response_times = [
+              int(value)
+              for value in re.findall(
+                  r"Response Time:\s*(\d+)\s*ms",
+                  log_text
+              )
+          ]
 
-                  for node in root.iter():
-                      if node.tag.endswith("system-out") or node.tag.endswith("system-err"):
-                          output = node.text or ""
-                          response_times.extend(
-                              int(value)
-                              for value in re.findall(
-                                  r"Response Time:\s*(\d+)\s*ms",
-                                  output
-                              )
-                          )
+          # Prefer Maven's final aggregate test summary.
+          matches = re.findall(
+              r"Tests run:\s*(\d+),\s*Failures:\s*(\d+),"
+              r"\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+)",
+              log_text
+          )
 
-                  if root.tag == "testsuites":
-                      suites = root.findall("testsuite")
-                  elif root.tag == "testsuite":
-                      suites = [root]
-                  else:
+          if matches:
+              total, failures, errors, skipped = map(
+                  int, matches[-1]
+              )
+              counts_found = True
+
+          # Fall back to Surefire XML reports if needed.
+          if not counts_found:
+              for file in glob.glob("target/surefire-reports/TEST-*.xml"):
+                  try:
+                      root = ET.parse(file).getroot()
+
+                      if root.tag == "testsuite":
+                          suites = [root]
+                      else:
+                          suites = root.findall(".//testsuite")
+
+                      for suite in suites:
+                          tests = int(suite.get("tests", 0))
+                          failures += int(suite.get("failures", 0))
+                          errors += int(suite.get("errors", 0))
+                          skipped += int(suite.get("skipped", 0))
+                          total += tests
+                          xml_duration += float(suite.get("time", 0))
+                          counts_found = True
+
+                  except (ET.ParseError, OSError, ValueError):
                       continue
 
-                  for suite in suites:
-                      tests = int(suite.get("tests", 0))
-                      errors = int(suite.get("errors", 0))
-                      failures = int(suite.get("failures", 0))
-                      skips = int(suite.get("skipped", 0))
+          if counts_found:
+              passed = max(0, total - failures - errors - skipped)
 
-                      total += tests
-                      failed += errors + failures
-                      skipped += skips
-                      passed += max(
-                          0,
-                          tests - errors - failures - skips
-                      )
+          # Read elapsed test time from the aggregate Maven log.
+          elapsed_matches = re.findall(
+              r"Tests run:\s*\d+,.*?Time elapsed:\s*([\d.]+)\s*s",
+              log_text
+          )
 
-              except (ET.ParseError, OSError, ValueError):
-                  continue
+          build_times = re.findall(
+              r"Total time:\s*([\d.]+)\s*s",
+              log_text
+          )
 
-          # Read the Maven console if XML reports contain no timings.
-          if not response_times:
-              try:
-                  with open(
-                      "testforge-maven.log",
-                      encoding="utf-8",
-                      errors="replace"
-                  ) as log:
-                      response_times = [
-                          int(value)
-                          for value in re.findall(
-                              r"Response Time:\s*(\d+)\s*ms",
-                              log.read()
-                          )
-                      ]
-              except OSError:
-                  pass
+          if elapsed_matches:
+              duration_label = "Test execution duration"
+              duration = f"{float(elapsed_matches[-1]):.2f} s"
+          elif xml_duration > 0:
+              duration_label = "Test execution duration (XML)"
+              duration = f"{xml_duration:.2f} s"
+          elif build_times:
+              duration_label = "Maven build duration"
+              duration = f"{float(build_times[-1]):.2f} s"
+          else:
+              duration_label = "Execution duration"
+              duration = "Not available"
+
+          if "BUILD SUCCESS" in log_text:
+              build_result = "Success"
+          elif "BUILD FAILURE" in log_text:
+              build_result = "Failure"
+          else:
+              build_result = "Could not determine"
 
           summary = [
               "# TestForge — Execution Summary",
               "",
+              f"**Build result:** {build_result}",
+              "",
               "| Metric | Result |",
               "|---|---:|",
-              f"| Total tests | {total} |",
-              f"| Passed | {passed} |",
-              f"| Failed | {failed} |",
-              f"| Skipped | {skipped} |",
+          ]
+
+          if counts_found:
+              summary.extend([
+                  f"| Total tests | {total} |",
+                  f"| Passed | {passed} |",
+                  f"| Failed | {failures} |",
+                  f"| Errors | {errors} |",
+                  f"| Skipped | {skipped} |",
+              ])
+          else:
+              summary.append(
+                  "| Test counts | Not available — check Maven logs |"
+              )
+
+          summary.extend([
+              f"| {duration_label} | {duration} |",
               "",
               "## API Response-Time Metrics",
               "",
-          ]
+          ])
 
           if response_times:
               average = sum(response_times) / len(response_times)
@@ -123,154 +136,20 @@ jobs:
                   "|---|---:|",
                   f"| API samples | {len(response_times)} |",
                   f"| Average response time | {average:.2f} ms |",
-                  f"| Maximum response time | {max(response_times)} ms |",
                   f"| Minimum response time | {min(response_times)} ms |",
+                  f"| Maximum response time | {max(response_times)} ms |",
                   "",
               ])
           else:
               summary.extend([
-                  "_No API response-time values were found in the XML reports or Maven console log._",
+                  "_No API response-time measurements were found in the Maven log._",
                   "",
               ])
-
-          if not files:
-              summary.append("_No Surefire XML reports were found._")
 
           with open(
               os.environ["GITHUB_STEP_SUMMARY"],
               "a",
               encoding="utf-8"
-          ) as out:
-              out.write("\n".join(summary) + "\n")
+          ) as output:
+              output.write("\n".join(summary) + "\n")
           PY
-
-      - name: Upload Full Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-full
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
-
-  smoke-test:
-    name: Smoke Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
-      - name: Run Smoke Tests
-        run: mvn -B clean test -Dtest=GoogleSearchTest
-
-      - name: Upload Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-smoke
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
-
-  regression-test:
-    name: Regression Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-
-      - name: Run Regression Tests
-        run: mvn -B clean test -Dtest=GoogleSearchRegressionTest
-
-      - name: Upload Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-regression
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
-
-  api-smoke-test:
-    name: API Smoke Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - name: Run API Smoke Tests
-        run: mvn -B clean test -Papi-smoke
-
-      - name: Upload API Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-smoke
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
-
-  api-regression-test:
-    name: API Regression Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - name: Run API Regression Tests
-        run: mvn -B clean test -Papi-regression
-
-      - name: Upload API Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-regression
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
-
-  api-performance-test:
-    name: API Performance Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-
-      - name: Run API Performance Tests
-        run: mvn -B clean test -Papi-performance
-
-      - name: Upload API Performance Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-performance
-          path: test-output/ExtentReport.html
-          if-no-files-found: warn
