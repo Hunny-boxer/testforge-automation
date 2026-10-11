@@ -7,15 +7,15 @@ import java.util.Properties;
 
 public class ConfigManager {
 
-    private static final Properties properties = loadFromResource();
+    private static final Properties properties =
+            loadFromResource(ConfigManager.class.getClassLoader());
 
     private ConfigManager() {
         // Utility class; prevent unnecessary instances.
     }
 
-    private static Properties loadFromResource() {
-        try (InputStream input = ConfigManager.class
-                .getClassLoader()
+    static Properties loadFromResource(ClassLoader classLoader) {
+        try (InputStream input = classLoader
                 .getResourceAsStream("config.properties")) {
 
             return loadProperties(input);
