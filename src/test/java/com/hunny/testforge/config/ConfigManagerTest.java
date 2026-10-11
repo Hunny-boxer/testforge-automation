@@ -3,6 +3,7 @@ package com.hunny.testforge.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
@@ -73,6 +74,37 @@ public class ConfigManagerTest {
         Assert.assertEquals(
                 loadedProperties.getProperty("browser"),
                 "firefox"
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldWrapResourceLookupFailure() {
+        ClassLoader failingClassLoader = new ClassLoader() {
+            @Override
+            public InputStream getResourceAsStream(String name) {
+                throw new IllegalStateException(
+                        "simulated resource lookup failure"
+                );
+            }
+        };
+
+        RuntimeException exception = Assert.expectThrows(
+                RuntimeException.class,
+                () -> ConfigManager.loadFromResource(failingClassLoader)
+        );
+
+        Assert.assertEquals(
+                exception.getMessage(),
+                "Failed to load configuration"
+        );
+
+        Assert.assertTrue(
+                exception.getCause() instanceof IllegalStateException
+        );
+
+        Assert.assertEquals(
+                exception.getCause().getMessage(),
+                "simulated resource lookup failure"
         );
     }
 }
