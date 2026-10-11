@@ -16,19 +16,32 @@ public class InvalidCreateUserApiTest extends ApiBaseTest {
     @DataProvider(name = "invalidUserPayloads")
     public Object[][] invalidUserPayloads() {
         return new Object[][]{
-                {"Missing name", "{\"username\":\"hunnyboxer\",\"email\":\"hunny@example.com\"}"},
-                {"Missing email", "{\"name\":\"Hunny Boxer\",\"username\":\"hunnyboxer\"}"},
-                {"Empty payload", "{}"}
+                {
+                        "Missing name",
+                        "{\"username\":\"hunnyboxer\",\"email\":\"hunny@example.com\"}",
+                        "name"
+                },
+                {
+                        "Missing email",
+                        "{\"name\":\"Hunny Boxer\",\"username\":\"hunnyboxer\"}",
+                        "email"
+                },
+                {
+                        "Empty payload",
+                        "{}",
+                        "name"
+                }
         };
     }
 
     @Test(
             dataProvider = "invalidUserPayloads",
-            groups = {"API", "REGRESSION", "NEGATIVE"}
+            groups = {"API", "REGRESSION", "MOCK_BEHAVIOR"}
     )
-    public void submitInvalidUserPayload(
+    public void jsonPlaceholderAcceptsIncompleteUserPayload(
             String scenario,
-            String requestBody) {
+            String requestBody,
+            String missingField) {
 
         Response response =
                 given()
@@ -41,10 +54,22 @@ public class InvalidCreateUserApiTest extends ApiBaseTest {
         System.out.println("Status Code: " + response.getStatusCode());
         System.out.println("Response Body: " + response.asString());
 
+        Assert.assertEquals(
+                response.getStatusCode(),
+                201,
+                "JSONPlaceholder should simulate a successful POST"
+        );
+
+        int generatedId = response.jsonPath().getInt("id");
+
         Assert.assertTrue(
-                response.getStatusCode() >= 200
-                        && response.getStatusCode() < 600,
-                "The API should return a valid HTTP status code"
+                generatedId > 0,
+                "The simulated response should contain a positive ID"
+        );
+
+        Assert.assertNull(
+                response.jsonPath().getString(missingField),
+                "The mock should not invent the missing field: " + missingField
         );
     }
 }
