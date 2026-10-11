@@ -1,45 +1,30 @@
-
-name: TestForge Automation
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-jobs:
-  full-test:
-    name: Full Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-      - name: Run Full Test Suite
-        run: mvn -B clean test
       - name: Publish Test Execution Summary
         if: always()
         run: |
           python - <<'PY'
           import glob
           import os
+          import re
           import xml.etree.ElementTree as ET
 
           files = glob.glob("target/surefire-reports/TEST-*.xml")
           total = passed = failed = skipped = 0
+          response_times = []
 
           for file in files:
               try:
                   root = ET.parse(file).getroot()
+
+                  for node in root.iter():
+                      if node.tag.endswith("system-out") or node.tag.endswith("system-err"):
+                          output = node.text or ""
+                          response_times.extend(
+                              int(value)
+                              for value in re.findall(
+                                  r"Response Time:\s*(\d+)\s*ms", output
+                              )
+                          )
+
                   if root.tag == "testsuites":
                       suites = root.findall("testsuite")
                   elif root.tag == "testsuite":
@@ -56,6 +41,7 @@ jobs:
                       failed += errors + failures
                       skipped += skips
                       passed += max(0, tests - errors - failures - skips)
+
               except (ET.ParseError, OSError, ValueError):
                   continue
 
@@ -69,120 +55,29 @@ jobs:
               f"| Failed | {failed} |",
               f"| Skipped | {skipped} |",
               "",
+              "## API Response-Time Metrics",
+              "",
           ]
 
-          if not files:
+          if response_times:
+              average = sum(response_times) / len(response_times)
+              summary.extend([
+                  "| Metric | Result |",
+                  "|---|---:|",
+                  f"| API samples | {len(response_times)} |",
+                  f"| Average response time | {average:.2f} ms |",
+                  f"| Maximum response time | {max(response_times)} ms |",
+                  "",
+              ])
+          else:
               summary.append(
-                  "_No Surefire XML reports were found._"
+                  "_No API response-time values were found in the Surefire XML reports._"
               )
+              summary.append("")
+
+          if not files:
+              summary.append("_No Surefire XML reports were found._")
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
               out.write("\n".join(summary) + "\n")
           PY
-      - name: Upload Full Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-full
-          path: test-output/ExtentReport.html
-
-  smoke-test:
-    name: Smoke Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-      - name: Run Smoke Tests
-        run: mvn -B clean test -Psmoke
-      - name: Upload Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-smoke
-          path: test-output/ExtentReport.html
-
-  regression-test:
-    name: Regression Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
-      - name: Run Regression Tests
-        run: mvn -B clean test -Pregression
-      - name: Upload Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-regression
-          path: test-output/ExtentReport.html
-
-  api-smoke-test:
-    name: API Smoke Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - name: Run API Smoke Tests
-        run: mvn -B clean test -Papi-smoke
-      - name: Upload API Smoke Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-smoke
-          path: test-output/ExtentReport.html
-
-  api-regression-test:
-    name: API Regression Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - name: Run API Regression Tests
-        run: mvn -B clean test -Papi-regression
-      - name: Upload API Regression Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-regression
-          path: test-output/ExtentReport.html
-
-  api-performance-test:
-    name: API Performance Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: temurin
-          cache: maven
-      - name: Run API Performance Tests
-        run: mvn -B clean test -Papi-performance
-      - name: Upload API Performance Extent Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: extent-report-api-performance
-          path: test-output/ExtentReport.html
