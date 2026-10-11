@@ -30,18 +30,10 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                         .extract()
                         .response();
 
-        System.out.println(
-                "Status Code: " + response.getStatusCode()
-        );
-
-        System.out.println(
-                "Response Body: " + response.asString()
-        );
-
         Assert.assertEquals(
                 response.getStatusCode(),
                 200,
-                "Expected HTTP status code 200"
+                "Expected HTTP 200 for user retrieval"
         );
 
         Assert.assertEquals(
@@ -50,9 +42,72 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                 "User ID should be 1"
         );
 
-        Assert.assertNotNull(
-                response.jsonPath().getString("name"),
-                "User name should not be null"
+        Assert.assertTrue(
+                response.jsonPath().getString("name") != null
+                        && !response.jsonPath().getString("name").isBlank(),
+                "User name should not be empty"
+        );
+
+        Assert.assertTrue(
+                response.jsonPath().getString("email") != null
+                        && !response.jsonPath().getString("email").isBlank(),
+                "User email should not be empty"
+        );
+    }
+
+    @Test(groups = {"API", "SMOKE"})
+    public void getPostDetails() {
+
+        Response response =
+                given()
+                        .spec(getRequestSpecification())
+                        .pathParam("id", 1)
+                        .when()
+                        .get(ApiEndpoints.POST_BY_ID)
+                        .then()
+                        .spec(ApiResponseSpecification.successResponse())
+                        .body(matchesJsonSchemaInClasspath(
+                                "schemas/post-schema.json"
+                        ))
+                        .extract()
+                        .response();
+
+        System.out.println(
+                "Post response status: " + response.getStatusCode()
+        );
+        System.out.println(
+                "Post response body: " + response.asString()
+        );
+
+        Assert.assertEquals(
+                response.getStatusCode(),
+                200,
+                "Expected HTTP 200 for post retrieval"
+        );
+
+        Assert.assertEquals(
+                response.jsonPath().getInt("id"),
+                1,
+                "Post ID should be 1"
+        );
+
+        Assert.assertEquals(
+                response.jsonPath().getInt("userId"),
+                1,
+                "Post should belong to user ID 1"
+        );
+
+        String title = response.jsonPath().getString("title");
+        String body = response.jsonPath().getString("body");
+
+        Assert.assertTrue(
+                title != null && !title.isBlank(),
+                "Post title should not be empty"
+        );
+
+        Assert.assertTrue(
+                body != null && !body.isBlank(),
+                "Post body should not be empty"
         );
     }
 }
