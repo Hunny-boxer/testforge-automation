@@ -13,7 +13,8 @@
 The project separates UI and API test suites, provides HTML execution reports, and runs automated checks through independent GitHub Actions jobs.
 
 **Repository:** [Hunny-boxer/testforge-automation](https://github.com/Hunny-boxer/testforge-automation)  
-**CI pipeline:** [View workflow runs](https://github.com/Hunny-boxer/testforge-automation/actions)
+**CI pipeline:** [View workflow runs](https://github.com/Hunny-boxer/testforge-automation/actions)  
+**Architecture:** [Explore the architecture diagram and execution flow](docs/ARCHITECTURE.md)
 
 ---
 
@@ -24,9 +25,17 @@ The project separates UI and API test suites, provides HTML execution reports, a
 - **Test organization:** TestNG annotations, groups, and separate smoke and regression suites.
 - **Performance checks:** API response-time measurements with a configurable threshold.
 - **HTML reporting:** ExtentReports with test names, categories, results, and API execution details.
-- **Continuous integration:** GitHub Actions runs the test jobs on pushes to `main` and pull requests targeting `main`.
-- **Execution artifacts:** HTML reports are uploaded from the CI jobs for later review.
+- **Continuous integration:** GitHub Actions runs test jobs on pushes to `main` and pull requests targeting `main`.
+- **Execution artifacts:** HTML reports are uploaded from CI jobs for later review.
 - **Execution summary:** The full-suite workflow publishes test totals and attempts to include API response-time metrics.
+
+## 🏗️ Architecture & Execution Flow
+
+Explore the architecture documentation to understand how the UI and API test layers, browser driver, reporting components, and CI pipeline work together.
+
+**[📐 View TestForge Architecture & Execution Flow →](docs/ARCHITECTURE.md)**
+
+The documentation includes a Mermaid architecture diagram, component responsibilities, execution steps, suite descriptions, and troubleshooting guidance.
 
 ## 🛠️ Technology Stack
 
@@ -110,13 +119,15 @@ The pipeline checks out the repository, configures Java 17, prepares Chrome for 
 
 **[View all TestForge workflow runs →](https://github.com/Hunny-boxer/testforge-automation/actions)**
 
-## 🏗️ Project Structure
+## 🗂️ Project Structure
 
 ```text
 testforge-automation/
 ├── .github/
 │   └── workflows/
 │       └── maven.yml
+├── docs/
+│   └── ARCHITECTURE.md
 ├── src/
 │   ├── main/
 │   │   └── java/com/hunny/testforge/
@@ -156,7 +167,7 @@ testforge-automation/
 - Chrome for the UI tests
 - Internet access for the configured demo endpoints and dependency downloads
 
-Run the following commands from the repository root:
+Run the following commands from the repository root.
 
 **Full suite**
 
@@ -194,14 +205,14 @@ mvn -B clean test -Papi-regression
 mvn -B clean test -Papi-performance
 ```
 
-If local software installation is restricted, the GitHub Actions workflow can run the configured jobs in GitHub's hosted environment.
+If local software installation is restricted, GitHub Actions can run the configured jobs in GitHub's hosted environment.
 
 ## 🗺️ Roadmap
 
 Potential next improvements include:
 
 - Environment-specific configuration for QA, staging, and production.
-- Richer API assertions and schema validation coverage.
+- Richer API assertions and JSON schema validation coverage.
 - Historical response-time trends and performance thresholds by endpoint.
 - Improved failure diagnostics and browser screenshots.
 - Pull-request quality gates and coverage reporting.
