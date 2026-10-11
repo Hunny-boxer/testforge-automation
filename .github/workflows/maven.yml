@@ -32,10 +32,10 @@ jobs:
         with:
           chrome-version: stable
 
-      - name: Run Full Test Suite
+      - name: Run Full Test Suite and Coverage
         run: |
           set -o pipefail
-          mvn -B clean test 2>&1 | tee testforge-maven.log
+          mvn -B clean verify 2>&1 | tee testforge-maven.log
 
       - name: Publish Test Execution Summary
         if: always()
@@ -48,11 +48,8 @@ jobs:
 
           log_text = ""
           try:
-              with open(
-                  "testforge-maven.log",
-                  encoding="utf-8",
-                  errors="replace"
-              ) as log:
+              with open("testforge-maven.log", encoding="utf-8",
+                        errors="replace") as log:
                   log_text = log.read()
           except OSError:
               pass
@@ -62,10 +59,8 @@ jobs:
           xml_duration = 0.0
 
           response_times = [
-              int(value)
-              for value in re.findall(
-                  r"Response Time:\s*(\d+)\s*ms",
-                  log_text
+              int(value) for value in re.findall(
+                  r"Response Time:\s*(\d+)\s*ms", log_text
               )
           ]
 
@@ -104,8 +99,7 @@ jobs:
               log_text
           )
           build_times = re.findall(
-              r"Total time:\s*([\d.]+)\s*s",
-              log_text
+              r"Total time:\s*([\d.]+)\s*s", log_text
           )
 
           if elapsed:
@@ -174,11 +168,8 @@ jobs:
                   "",
               ])
 
-          with open(
-              os.environ["GITHUB_STEP_SUMMARY"],
-              "a",
-              encoding="utf-8"
-          ) as output:
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a",
+                    encoding="utf-8") as output:
               output.write("\n".join(summary) + "\n")
           PY
 
@@ -197,6 +188,22 @@ jobs:
         with:
           name: extent-report-full
           path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+      - name: Upload JaCoCo Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
+          if-no-files-found: warn
+
+      - name: Upload JaCoCo Coverage Data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-data
+          path: target/jacoco.exec
           if-no-files-found: warn
 
   smoke-test:
