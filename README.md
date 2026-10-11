@@ -1,3 +1,4 @@
+
 # 🚀 TestForge — UI & API Automation Framework
 
 [![TestForge CI](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml/badge.svg)](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml)
@@ -8,34 +9,53 @@
 ![TestNG](https://img.shields.io/badge/Test%20Framework-TestNG-red)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**TestForge** is a Java-based test automation framework for validating web applications and REST APIs. It combines Selenium WebDriver, REST Assured, TestNG, Maven, ExtentReports, and GitHub Actions to demonstrate maintainable test automation and continuous integration.
+**TestForge** is a Java-based UI and API test automation framework built to demonstrate reusable test architecture, automated validation, HTML reporting, and continuous integration.
 
-The project separates UI and API test suites, provides HTML execution reports, and runs automated checks through independent GitHub Actions jobs.
+It combines Selenium WebDriver, REST Assured, TestNG, Maven, ExtentReports, and GitHub Actions in one portfolio project.
 
 **Repository:** [Hunny-boxer/testforge-automation](https://github.com/Hunny-boxer/testforge-automation)  
-**CI pipeline:** [View workflow runs](https://github.com/Hunny-boxer/testforge-automation/actions)  
-**Architecture:** [Explore the architecture diagram and execution flow](docs/ARCHITECTURE.md)
+**CI pipeline:** [View GitHub Actions](https://github.com/Hunny-boxer/testforge-automation/actions)  
+**Architecture:** [Architecture and execution flow](docs/ARCHITECTURE.md)
 
 ---
 
 ## ✨ Key Features
 
-- **UI automation:** Selenium WebDriver with a reusable Page Object Model.
-- **REST API testing:** REST Assured for HTTP requests, status-code validation, and response checks.
-- **Test organization:** TestNG annotations, groups, and separate smoke and regression suites.
-- **Performance checks:** API response-time measurements with a configurable threshold.
-- **HTML reporting:** ExtentReports with test names, categories, results, and API execution details.
-- **Continuous integration:** GitHub Actions runs test jobs on pushes to `main` and pull requests targeting `main`.
-- **Execution artifacts:** HTML reports are uploaded from CI jobs for later review.
-- **Execution summary:** The full-suite workflow publishes test totals and attempts to include API response-time metrics.
+- **UI automation:** Selenium WebDriver with Page Object Model architecture.
+- **API automation:** REST Assured for HTTP requests and response validation.
+- **Test organization:** TestNG groups and separate smoke, regression, and performance suites.
+- **Schema validation:** JSON Schema validation for API responses.
+- **Performance checks:** API response-time measurements against a configured threshold.
+- **HTML reporting:** ExtentReports for reviewing test execution results.
+- **Continuous integration:** GitHub Actions executes the configured suites.
+- **Report artifacts:** HTML reports are uploaded for download after workflow runs.
+- **Execution summary:** The full-suite workflow generates a GitHub Actions summary from available test logs and reports.
+
+## 📸 TestForge in Action
+
+### GitHub Actions — CI Pipeline
+
+The repository uses six independent workflow jobs to execute UI and API tests.
+
+![TestForge GitHub Actions CI run](docs/testforge-ci-run.png)
+
+[View the successful CI run](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38131224018)
+
+### ExtentReports — HTML Test Report
+
+TestForge generates HTML reports to make test outcomes easier to review.
+
+![TestForge ExtentReports sample](docs/extent-report-sample.png)
+
+To view the latest report, open a [GitHub Actions workflow run](https://github.com/Hunny-boxer/testforge-automation/actions), find its Artifacts section, download the relevant report ZIP, extract it, and open `ExtentReport.html` in a browser.
 
 ## 🏗️ Architecture & Execution Flow
 
-Explore the architecture documentation to understand how the UI and API test layers, browser driver, reporting components, and CI pipeline work together.
+TestForge separates UI automation, API automation, shared setup, and reporting components.
 
-**[📐 View TestForge Architecture & Execution Flow →](docs/ARCHITECTURE.md)**
+**[📐 Explore the architecture documentation →](docs/ARCHITECTURE.md)**
 
-The documentation includes a Mermaid architecture diagram, component responsibilities, execution steps, suite descriptions, and troubleshooting guidance.
+The architecture documentation describes the main components, execution flow, suite organization, and troubleshooting guidance.
 
 ## 🛠️ Technology Stack
 
@@ -46,14 +66,15 @@ The documentation includes a Mermaid architecture diagram, component responsibil
 | Selenium WebDriver | Browser automation |
 | TestNG | Test execution, grouping, and suite configuration |
 | REST Assured | REST API automation |
+| JSON Schema Validator | API response schema validation |
 | ExtentReports | HTML test reporting |
-| GitHub Actions | Continuous integration and test execution |
+| GitHub Actions | Continuous integration |
 
-## 🧪 Test Suites
+## 🧪 Automated Test Suites
 
-The pipeline is split into six jobs so that UI, API, and full-suite results can be reviewed separately.
+The workflow contains six independent jobs.
 
-| Suite | Execution command |
+| Suite | Maven command |
 |---|---|
 | Full test suite | `mvn -B clean test` |
 | UI smoke | `mvn -B clean test -Dtest=GoogleSearchTest` |
@@ -62,28 +83,37 @@ The pipeline is split into six jobs so that UI, API, and full-suite results can 
 | API regression | `mvn -B clean test -Papi-regression` |
 | API performance | `mvn -B clean test -Papi-performance` |
 
-The individual UI commands target their respective test classes. The API commands use the Maven profiles configured in `pom.xml`.
+The UI commands target their respective test classes. The API commands use Maven profiles configured in `pom.xml`.
 
-Test counts can differ between runs as the framework evolves. Results from separate suites may overlap, so their totals should not be added together as a unique test count.
+Test counts can change as the framework evolves. Results from separate suites may overlap, so their totals should not be added together as a unique test count.
 
-## 🌐 API Performance Validation
+## 🌐 API Testing & Validation
 
-The API performance tests measure the response time of representative GET requests, including:
+The API tests exercise representative JSONPlaceholder endpoints, including:
+
+- `GET /users/{id}` — retrieve a user.
+- `GET /posts/{id}` — retrieve a post.
+- `POST /users` — exercise simulated user creation.
+- `PUT /users/{id}` — exercise simulated user updates.
+
+The framework includes status-code assertions, response field validation, JSON Schema validation, and negative test cases.
+
+**Note:** JSONPlaceholder is a demo API. Its write operations simulate changes rather than persist resources like a production database. Negative tests should reflect the behavior of this mock service.
+
+## ⚡ API Performance Validation
+
+The API performance tests measure response times for representative GET requests:
 
 - `GET /users/{id}`
 - `GET /posts/{id}`
 
-Each response-time test checks the HTTP status code and verifies that the request completes within the configured threshold.
+The current response-time threshold is configured in `ApiResponseTimeTest.java` as `10,000 ms`.
 
-The API response-time threshold is currently configured in `ApiResponseTimeTest.java` as `10,000 ms`. This is a pass/fail limit for the test, not a claim that the API should normally take that long.
-
-The framework also records endpoint, status-code, and response-time information for reporting and CI diagnostics.
+This is a test pass/fail threshold, not a claim about normal API latency. Actual timings vary with network conditions and the demo service.
 
 ## 📊 ExtentReports
 
-TestForge generates HTML reports to help review test execution beyond the final build status.
-
-Reports are uploaded as GitHub Actions artifacts when generated:
+TestForge uploads HTML report artifacts when reports are generated.
 
 | Artifact | Contents |
 |---|---|
@@ -94,30 +124,31 @@ Reports are uploaded as GitHub Actions artifacts when generated:
 | `extent-report-api-regression` | API regression report |
 | `extent-report-api-performance` | API performance report |
 
-### How to view a report
+### How to download a report
 
 1. Open [GitHub Actions](https://github.com/Hunny-boxer/testforge-automation/actions).
-2. Select a workflow run.
-3. Find the **Artifacts** section near the bottom of the run page.
-4. Download the relevant report artifact.
-5. Extract the downloaded ZIP and open `ExtentReport.html` in a browser.
+2. Select a completed workflow run.
+3. Scroll to the **Artifacts** section.
+4. Download the report artifact you need.
+5. Extract the ZIP archive.
+6. Open `ExtentReport.html` in your browser.
 
 ## ⚙️ Continuous Integration
 
-The GitHub Actions workflow is defined in `.github/workflows/maven.yml`.
+The workflow is defined in `.github/workflows/maven.yml`.
 
-The workflow provides six independent jobs:
+On pushes to `main` and pull requests targeting `main`, GitHub Actions runs the configured workflow jobs.
 
-1. Full Test Suite
-2. Smoke Test Suite
-3. Regression Test Suite
-4. API Smoke Test Suite
-5. API Regression Test Suite
-6. API Performance Test Suite
+The pipeline:
 
-The pipeline checks out the repository, configures Java 17, prepares Chrome for UI testing where required, executes the appropriate Maven command, and uploads generated report artifacts.
+1. Checks out the repository.
+2. Sets up Java 17.
+3. Prepares Chrome for UI tests where required.
+4. Executes the relevant Maven test command.
+5. Publishes the full-suite execution summary.
+6. Uploads generated HTML report artifacts.
 
-**[View all TestForge workflow runs →](https://github.com/Hunny-boxer/testforge-automation/actions)**
+**[🚀 View all workflow runs →](https://github.com/Hunny-boxer/testforge-automation/actions)**
 
 ## 🗂️ Project Structure
 
@@ -127,7 +158,9 @@ testforge-automation/
 │   └── workflows/
 │       └── maven.yml
 ├── docs/
-│   └── ARCHITECTURE.md
+│   ├── ARCHITECTURE.md
+│   ├── extent-report-sample.png
+│   └── testforge-ci-run.png
 ├── src/
 │   ├── main/
 │   │   └── java/com/hunny/testforge/
@@ -149,14 +182,14 @@ testforge-automation/
 └── README.md
 ```
 
-### Design overview
+### Design Overview
 
 - **Configuration and driver management:** Centralized browser and configuration utilities.
-- **Page Object Model:** UI page interactions are separated from test methods.
-- **Base test classes:** Shared setup and teardown for the framework.
-- **API test layer:** Reusable request configuration, endpoint definitions, and API tests.
-- **Reporting layer:** Listener-based capture of test outcomes and ExtentReports lifecycle management.
-- **CI layer:** GitHub Actions executes the suites and publishes artifacts.
+- **Page Object Model:** Separates UI interactions from test methods.
+- **Base test classes:** Provides shared setup and teardown.
+- **API test layer:** Organizes request configuration, endpoint definitions, and API tests.
+- **Reporting layer:** Manages test outcome capture and ExtentReports lifecycle.
+- **CI layer:** Runs test suites and publishes artifacts through GitHub Actions.
 
 ## ▶️ Running the Project
 
@@ -164,60 +197,60 @@ testforge-automation/
 
 - JDK 17
 - Maven
-- Chrome for the UI tests
-- Internet access for the configured demo endpoints and dependency downloads
+- Chrome for UI tests
+- Internet access for dependencies and configured demo endpoints
 
-Run the following commands from the repository root.
+Run commands from the repository root.
 
-**Full suite**
+**Full test suite**
 
 ```bash
 mvn -B clean test
 ```
 
-**UI smoke test**
+**UI smoke**
 
 ```bash
 mvn -B clean test -Dtest=GoogleSearchTest
 ```
 
-**UI regression test**
+**UI regression**
 
 ```bash
 mvn -B clean test -Dtest=GoogleSearchRegressionTest
 ```
 
-**API smoke tests**
+**API smoke**
 
 ```bash
 mvn -B clean test -Papi-smoke
 ```
 
-**API regression tests**
+**API regression**
 
 ```bash
 mvn -B clean test -Papi-regression
 ```
 
-**API performance tests**
+**API performance**
 
 ```bash
 mvn -B clean test -Papi-performance
 ```
 
-If local software installation is restricted, GitHub Actions can run the configured jobs in GitHub's hosted environment.
+If installing software locally is restricted, GitHub Actions can run the configured jobs in GitHub's hosted environment.
 
 ## 🗺️ Roadmap
 
-Potential next improvements include:
+Potential future improvements include:
 
 - Environment-specific configuration for QA, staging, and production.
-- Richer API assertions and JSON schema validation coverage.
-- Historical response-time trends and performance thresholds by endpoint.
+- Broader API schema validation and negative test coverage.
+- Historical API response-time trends.
 - Improved failure diagnostics and browser screenshots.
-- Pull-request quality gates and coverage reporting.
+- Pull-request quality gates and code coverage reporting.
 
-These are future enhancements, not claims that every item is already implemented.
+These are planned enhancements, not claims that every item is already implemented.
 
 ## 👨‍💻 Author
 
@@ -227,4 +260,4 @@ GitHub: [@Hunny-boxer](https://github.com/Hunny-boxer)
 
 ---
 
-*TestForge is a learning and portfolio project demonstrating UI and API test automation, framework organization, reporting, and continuous integration.*
+*TestForge is a portfolio project demonstrating UI and API automation, reusable framework architecture, reporting, and continuous integration.*
