@@ -1,4 +1,37 @@
 
+name: TestForge Automation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  full-test:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Run Full Test Suite
+        run: |
+          set -o pipefail
+          mvn -B clean test 2>&1 | tee testforge-maven.log
+
       - name: Publish Test Execution Summary
         if: always()
         run: |
@@ -22,6 +55,7 @@
           total = passed = failures = errors = skipped = 0
           counts_found = False
           xml_duration = 0.0
+
           response_times = [
               int(value)
               for value in re.findall(
@@ -30,7 +64,6 @@
               )
           ]
 
-          # Prefer Maven's final aggregate test summary.
           matches = re.findall(
               r"Tests run:\s*(\d+),\s*Failures:\s*(\d+),"
               r"\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+)",
@@ -43,16 +76,15 @@
               )
               counts_found = True
 
-          # Fall back to Surefire XML reports if needed.
           if not counts_found:
               for file in glob.glob("target/surefire-reports/TEST-*.xml"):
                   try:
                       root = ET.parse(file).getroot()
-
-                      if root.tag == "testsuite":
-                          suites = [root]
-                      else:
-                          suites = root.findall(".//testsuite")
+                      suites = (
+                          [root]
+                          if root.tag == "testsuite"
+                          else root.findall(".//testsuite")
+                      )
 
                       for suite in suites:
                           tests = int(suite.get("tests", 0))
@@ -69,12 +101,10 @@
           if counts_found:
               passed = max(0, total - failures - errors - skipped)
 
-          # Read elapsed test time from the aggregate Maven log.
           elapsed_matches = re.findall(
               r"Tests run:\s*\d+,.*?Time elapsed:\s*([\d.]+)\s*s",
               log_text
           )
-
           build_times = re.findall(
               r"Total time:\s*([\d.]+)\s*s",
               log_text
@@ -153,3 +183,134 @@
           ) as output:
               output.write("\n".join(summary) + "\n")
           PY
+
+      - name: Upload Full Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-full
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+  smoke-test:
+    name: Smoke Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Run Smoke Tests
+        run: mvn -B clean test -Dtest=GoogleSearchTest
+
+      - name: Upload Smoke Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-smoke
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+  regression-test:
+    name: Regression Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Run Regression Tests
+        run: mvn -B clean test -Dtest=GoogleSearchRegressionTest
+
+      - name: Upload Regression Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-regression
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+  api-smoke-test:
+    name: API Smoke Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Run API Smoke Tests
+        run: mvn -B clean test -Papi-smoke
+
+      - name: Upload API Smoke Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-api-smoke
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+  api-regression-test:
+    name: API Regression Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Run API Regression Tests
+        run: mvn -B clean test -Papi-regression
+
+      - name: Upload API Regression Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-api-regression
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
+
+  api-performance-test:
+    name: API Performance Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Run API Performance Tests
+        run: mvn -B clean test -Papi-performance
+
+      - name: Upload API Performance Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report-api-performance
+          path: test-output/ExtentReport.html
+          if-no-files-found: warn
