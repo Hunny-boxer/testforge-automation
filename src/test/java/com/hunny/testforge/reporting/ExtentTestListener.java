@@ -1,6 +1,7 @@
 
 package com.hunny.testforge.reporting;
 
+import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
@@ -66,5 +67,13 @@ public class ExtentTestListener implements ITestListener {
             ExtentReportManager.getTest()
                     .skip("Test Skipped");
         }
+    }
+
+    @Override
+    public void onFinish(ITestContext context) {
+
+        // Flush the HTML report when the TestNG test context finishes.
+        // This also supports suites launched through individual XML files.
+        ExtentReportManager.flushReports();
     }
 }
