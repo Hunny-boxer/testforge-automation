@@ -1,3 +1,4 @@
+
 package com.hunny.testforge.driver;
 
 import com.hunny.testforge.config.ConfigManager;
@@ -9,12 +10,16 @@ public class DriverFactory {
 
     private static WebDriver driver;
 
+    private DriverFactory() {
+        // Utility class; prevent unnecessary instances.
+    }
+
     public static void initializeDriver() {
+        initializeDriver(ConfigManager.getBrowser());
+    }
 
-        String browser = ConfigManager.getBrowser();
-
+    public static void initializeDriver(String browser) {
         if ("chrome".equalsIgnoreCase(browser)) {
-
             ChromeOptions options = new ChromeOptions();
 
             options.addArguments("--headless=new");
@@ -24,9 +29,10 @@ public class DriverFactory {
             options.addArguments("--window-size=1920,1080");
 
             driver = new ChromeDriver(options);
-
         } else {
-            throw new RuntimeException("Unsupported browser: " + browser);
+            throw new IllegalArgumentException(
+                    "Unsupported browser: " + browser
+            );
         }
     }
 
@@ -36,8 +42,11 @@ public class DriverFactory {
 
     public static void quitDriver() {
         if (driver != null) {
-            driver.quit();
-            driver = null;
+            try {
+                driver.quit();
+            } finally {
+                driver = null;
+            }
         }
     }
 }
