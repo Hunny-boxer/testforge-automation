@@ -1,26 +1,41 @@
+
 package com.hunny.testforge.config;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class ConfigManager {
 
-    private static final Properties properties = new Properties();
+    private static final Properties properties = loadFromResource();
 
-    static {
+    private ConfigManager() {
+        // Utility class; prevent unnecessary instances.
+    }
+
+    private static Properties loadFromResource() {
         try (InputStream input = ConfigManager.class
                 .getClassLoader()
                 .getResourceAsStream("config.properties")) {
 
-            if (input == null) {
-                throw new RuntimeException("config.properties not found");
-            }
-
-            properties.load(input);
+            return loadProperties(input);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load configuration", e);
         }
+    }
+
+    static Properties loadProperties(InputStream input)
+            throws IOException {
+
+        if (input == null) {
+            throw new RuntimeException("config.properties not found");
+        }
+
+        Properties loadedProperties = new Properties();
+        loadedProperties.load(input);
+
+        return loadedProperties;
     }
 
     public static String get(String key) {
