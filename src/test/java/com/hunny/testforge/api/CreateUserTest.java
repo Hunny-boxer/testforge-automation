@@ -49,9 +49,15 @@ public class CreateUserTest extends ApiBaseTest {
                 "Created username should match"
         );
 
-        Assert.assertNotNull(
-                response.jsonPath().get("id"),
-                "Created user ID should not be null"
+        Assert.assertEquals(
+                response.jsonPath().getString("email"),
+                "hunny@example.com",
+                "Created email should match the request data"
+        );
+
+        Assert.assertTrue(
+                response.jsonPath().getInt("id") > 0,
+                "Created user ID should be a positive number"
         );
     }
 }
