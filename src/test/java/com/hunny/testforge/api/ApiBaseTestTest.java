@@ -7,6 +7,36 @@ import org.testng.annotations.Test;
 public class ApiBaseTestTest {
 
     @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldConfigureFiveSecondConnectionTimeout() {
+        Object actual =
+                ApiBaseTest.defaultRestAssuredConfig()
+                        .getHttpClientConfig()
+                        .params()
+                        .get("http.connection.timeout");
+
+        Assert.assertEquals(
+                actual,
+                Integer.valueOf(5_000),
+                "Connection timeout should be 5 seconds"
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldConfigureTenSecondSocketTimeout() {
+        Object actual =
+                ApiBaseTest.defaultRestAssuredConfig()
+                        .getHttpClientConfig()
+                        .params()
+                        .get("http.socket.timeout");
+
+        Assert.assertEquals(
+                actual,
+                Integer.valueOf(10_000),
+                "Socket timeout should be 10 seconds"
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
     public void shouldPreserveSafeQueryParameters() {
         String result = ApiBaseTest.sanitizeRequestUri(
                 "https://api.example.test/users/1?sort=desc&page=2"
