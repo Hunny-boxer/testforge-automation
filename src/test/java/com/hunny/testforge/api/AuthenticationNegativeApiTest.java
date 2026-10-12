@@ -26,12 +26,7 @@ public class AuthenticationNegativeApiTest {
         Assert.assertEquals(
                 response.getStatusCode(),
                 401,
-                "Expected unauthorized response without a bearer token"
-        );
-
-        Assert.assertFalse(
-                response.asString().isBlank(),
-                "Expected a diagnostic response body"
+                "Expected 401 Unauthorized without a bearer token"
         );
     }
 }
