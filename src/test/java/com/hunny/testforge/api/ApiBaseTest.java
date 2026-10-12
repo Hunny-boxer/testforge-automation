@@ -5,6 +5,8 @@ import com.aventstack.extentreports.ExtentTest;
 import com.hunny.testforge.base.ReportingBaseTest;
 import com.hunny.testforge.reporting.ExtentReportManager;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.testng.annotations.BeforeClass;
@@ -21,6 +23,9 @@ import static io.restassured.http.ContentType.JSON;
 public class ApiBaseTest extends ReportingBaseTest {
 
     private static final int MAX_ERROR_BODY_LENGTH = 500;
+
+    private static final int CONNECTION_TIMEOUT_MS = 5_000;
+    private static final int SOCKET_TIMEOUT_MS = 10_000;
 
     private static final Pattern SENSITIVE_JSON_FIELD =
             Pattern.compile(
@@ -47,8 +52,30 @@ public class ApiBaseTest extends ReportingBaseTest {
         return requestSpecification;
     }
 
+    /**
+     * Provides bounded connection and socket timeouts.
+     * Use this configuration for other REST Assured requests
+     * that do not inherit the shared API request specification.
+     */
+    public static RestAssuredConfig defaultRestAssuredConfig() {
+        HttpClientConfig httpClientConfig =
+                HttpClientConfig.httpClientConfig()
+                        .setParam(
+                                "http.connection.timeout",
+                                CONNECTION_TIMEOUT_MS
+                        )
+                        .setParam(
+                                "http.socket.timeout",
+                                SOCKET_TIMEOUT_MS
+                        );
+
+        return RestAssuredConfig.config()
+                .httpClient(httpClientConfig);
+    }
+
     private RequestSpecification buildRequestSpecification() {
         return new RequestSpecBuilder()
+                .setConfig(defaultRestAssuredConfig())
                 .setBaseUri(ApiEndpoints.BASE_URL)
                 .setContentType(JSON)
                 .addFilter((requestSpec, responseSpec, context) -> {
@@ -82,8 +109,9 @@ public class ApiBaseTest extends ReportingBaseTest {
 
                         if (extentTest != null) {
                             extentTest.warning(
-                                    "API request execution failed before "
-                                            + "a response was received."
+                                    "API request execution failed or "
+                                            + "timed out before a response "
+                                            + "was received."
                             );
 
                             extentTest.info(
