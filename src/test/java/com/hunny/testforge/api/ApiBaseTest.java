@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static io.restassured.RestAssured.enableLoggingOfRequestAndResponseIfValidationFails;
 import static io.restassured.http.ContentType.JSON;
 
 public class ApiBaseTest extends ReportingBaseTest {
@@ -37,7 +36,6 @@ public class ApiBaseTest extends ReportingBaseTest {
 
     @BeforeClass
     public void setupApi() {
-        enableLoggingOfRequestAndResponseIfValidationFails();
         requestSpecification = buildRequestSpecification();
     }
 
