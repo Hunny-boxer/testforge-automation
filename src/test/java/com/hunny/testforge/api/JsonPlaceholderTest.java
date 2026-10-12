@@ -37,6 +37,12 @@ public class JsonPlaceholderTest extends ApiBaseTest {
         );
 
         Assert.assertEquals(
+                response.getHeader("X-Content-Type-Options"),
+                "nosniff",
+                "User response should disable MIME-type sniffing"
+        );
+
+        Assert.assertEquals(
                 response.jsonPath().getInt("id"),
                 1,
                 "User ID should be 1"
