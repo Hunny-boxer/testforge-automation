@@ -2,10 +2,13 @@
 package com.hunny.testforge.api;
 
 import com.aventstack.extentreports.ExtentTest;
+import com.hunny.testforge.config.ConfigManager;
 import com.hunny.testforge.reporting.ExtentReportManager;
 import com.hunny.testforge.reporting.ExtentTestListener;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -14,22 +17,12 @@ import static io.restassured.RestAssured.given;
 @Listeners(ExtentTestListener.class)
 public class ApiValidationNegativeTest {
 
-    private static final String BASE_URL =
-            "https://gorest.in/public/v2/users";
-
-    private static final String TEST_TOKEN =
-            "testforge-demo-token";
-
     @Test(groups = {"API", "REGRESSION", "NEGATIVE", "SECURITY"})
     public void malformedJsonShouldReturn400() {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
-                        .header(
-                                "Authorization",
-                                "Bearer " + TEST_TOKEN
-                        )
+                        .spec(authorizedRequest())
                         .contentType("application/json")
                         .body("{\"name\":")
                         .when()
@@ -56,11 +49,7 @@ public class ApiValidationNegativeTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
-                        .header(
-                                "Authorization",
-                                "Bearer " + TEST_TOKEN
-                        )
+                        .spec(authorizedRequest())
                         .contentType("application/json")
                         .body(requestBody)
                         .when()
@@ -88,11 +77,7 @@ public class ApiValidationNegativeTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
-                        .header(
-                                "Authorization",
-                                "Bearer " + TEST_TOKEN
-                        )
+                        .spec(authorizedRequest())
                         .contentType("text/plain")
                         .body(requestBody)
                         .when()
@@ -120,11 +105,7 @@ public class ApiValidationNegativeTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
-                        .header(
-                                "Authorization",
-                                "Bearer " + TEST_TOKEN
-                        )
+                        .spec(authorizedRequest())
                         .contentType("application/json")
                         .body(requestBody)
                         .when()
@@ -139,24 +120,43 @@ public class ApiValidationNegativeTest {
         );
     }
 
+    private RequestSpecification authorizedRequest() {
+
+        String baseUrl = ConfigManager.getApiBaseUrl();
+
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalStateException(
+                    "API base URL is not configured."
+            );
+        }
+
+        String token = ConfigManager.getApiToken();
+
+        if (token == null || token.isBlank()) {
+            throw new SkipException(
+                    "API validation tests skipped because "
+                    + "TESTFORGE_API_TOKEN is not configured."
+            );
+        }
+
+        return given()
+                .baseUri(baseUrl)
+                .header("Authorization", "Bearer " + token);
+    }
+
     private void logResult(
             String scenario,
             Response response) {
 
-        String responseContentType =
-                response.getHeader("Content-Type");
+        String contentType = response.getHeader("Content-Type");
 
-        if (responseContentType == null) {
-            responseContentType = "Not provided";
+        if (contentType == null) {
+            contentType = "Not provided";
         }
 
         System.out.println("Scenario: " + scenario);
-        System.out.println(
-                "HTTP Status: " + response.getStatusCode()
-        );
-        System.out.println(
-                "Response Content-Type: " + responseContentType
-        );
+        System.out.println("HTTP Status: " + response.getStatusCode());
+        System.out.println("Response Content-Type: " + contentType);
 
         ExtentTest extentTest = ExtentReportManager.getTest();
 
@@ -166,7 +166,7 @@ public class ApiValidationNegativeTest {
                     "HTTP Status: " + response.getStatusCode()
             );
             extentTest.info(
-                    "Response Content-Type: " + responseContentType
+                    "Response Content-Type: " + contentType
             );
         }
     }
