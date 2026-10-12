@@ -30,16 +30,10 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                         .extract()
                         .response();
 
-        Assert.assertEquals(
-                response.getStatusCode(),
-                200,
-                "Expected HTTP 200 for user retrieval"
-        );
-
-        Assert.assertEquals(
-                response.getHeader("X-Content-Type-Options"),
-                "nosniff",
-                "User response should disable MIME-type sniffing"
+        // Reusable status, Content-Type and security-header checks.
+        ApiSecurityAssertions.assertSecureJsonResponse(
+                response,
+                200
         );
 
         Assert.assertEquals(
@@ -48,15 +42,16 @@ public class JsonPlaceholderTest extends ApiBaseTest {
                 "User ID should be 1"
         );
 
+        String name = response.jsonPath().getString("name");
+        String email = response.jsonPath().getString("email");
+
         Assert.assertTrue(
-                response.jsonPath().getString("name") != null
-                        && !response.jsonPath().getString("name").isBlank(),
+                name != null && !name.isBlank(),
                 "User name should not be empty"
         );
 
         Assert.assertTrue(
-                response.jsonPath().getString("email") != null
-                        && !response.jsonPath().getString("email").isBlank(),
+                email != null && !email.isBlank(),
                 "User email should not be empty"
         );
     }
