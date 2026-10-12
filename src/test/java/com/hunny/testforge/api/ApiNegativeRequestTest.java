@@ -4,11 +4,19 @@ package com.hunny.testforge.api;
 import com.aventstack.extentreports.ExtentTest;
 import com.hunny.testforge.reporting.ExtentReportManager;
 import com.hunny.testforge.reporting.ExtentTestListener;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import io.restassured.response.Response;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 
@@ -17,7 +25,74 @@ import static io.restassured.RestAssured.given;
 @Listeners(ExtentTestListener.class)
 public class ApiNegativeRequestTest {
 
-    private static final String BASE_URL = "https://httpbin.org";
+    private HttpServer mockServer;
+    private String baseUrl;
+
+    @BeforeClass(alwaysRun = true)
+    public void startMockServer() throws IOException {
+        mockServer = HttpServer.create(
+                new InetSocketAddress("127.0.0.1", 0),
+                0
+        );
+
+        mockServer.createContext("/anything", exchange -> {
+            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendResponse(
+                        exchange,
+                        405,
+                        "application/json",
+                        "{\"error\":\"Method not allowed\"}"
+                );
+                return;
+            }
+
+            String requestBody = new String(
+                    exchange.getRequestBody().readAllBytes(),
+                    StandardCharsets.UTF_8
+            );
+
+            String requestContentType =
+                    exchange.getRequestHeaders().getFirst("Content-Type");
+
+            if (requestContentType == null) {
+                requestContentType = "";
+            }
+
+            String responseBody =
+                    "{\"data\":\"" + escapeJson(requestBody)
+                    + "\",\"headers\":{\"Content-Type\":\""
+                    + escapeJson(requestContentType) + "\"}}";
+
+            sendResponse(
+                    exchange,
+                    200,
+                    "application/json; charset=UTF-8",
+                    responseBody
+            );
+        });
+
+        mockServer.createContext("/xml", exchange ->
+                sendResponse(
+                        exchange,
+                        200,
+                        "application/xml; charset=UTF-8",
+                        "<note><message>XML fixture</message></note>"
+                )
+        );
+
+        mockServer.start();
+
+        baseUrl = "http://127.0.0.1:"
+                + mockServer.getAddress().getPort();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void stopMockServer() {
+        if (mockServer != null) {
+            mockServer.stop(0);
+            mockServer = null;
+        }
+    }
 
     @Test(groups = {"API", "REGRESSION", "NEGATIVE", "SECURITY"})
     public void malformedJsonPayloadShouldBePreservedAsRawRequestData() {
@@ -26,7 +101,7 @@ public class ApiNegativeRequestTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
+                        .baseUri(baseUrl)
                         .contentType("application/json")
                         .body(malformedJson)
                         .when()
@@ -38,22 +113,17 @@ public class ApiNegativeRequestTest {
                 response
         );
 
-        Assert.assertEquals(
-                response.getStatusCode(),
-                200,
-                "The HTTPBin echo endpoint should return HTTP 200"
-        );
+        Assert.assertEquals(response.getStatusCode(), 200);
 
         Assert.assertEquals(
                 response.jsonPath().getString("data"),
                 malformedJson,
-                "The echo response should preserve the malformed payload"
+                "The fixture should preserve the malformed payload"
         );
 
         Assert.assertEquals(
-                getEchoedRequestMediaType(response, "Content-Type"),
-                "application/json",
-                "The echoed request media type should be application/json"
+                echoedRequestMediaType(response),
+                "application/json"
         );
     }
 
@@ -64,7 +134,7 @@ public class ApiNegativeRequestTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
+                        .baseUri(baseUrl)
                         .contentType("text/plain")
                         .body(requestBody)
                         .when()
@@ -76,22 +146,17 @@ public class ApiNegativeRequestTest {
                 response
         );
 
-        Assert.assertEquals(
-                response.getStatusCode(),
-                200,
-                "The HTTPBin echo endpoint should return HTTP 200"
-        );
+        Assert.assertEquals(response.getStatusCode(), 200);
 
         Assert.assertEquals(
                 response.jsonPath().getString("data"),
                 requestBody,
-                "The echo response should preserve the request body"
+                "The fixture should preserve the request body"
         );
 
         Assert.assertEquals(
-                getEchoedRequestMediaType(response, "Content-Type"),
-                "text/plain",
-                "The echoed request media type should remain text/plain"
+                echoedRequestMediaType(response),
+                "text/plain"
         );
     }
 
@@ -100,7 +165,7 @@ public class ApiNegativeRequestTest {
 
         Response response =
                 given()
-                        .baseUri(BASE_URL)
+                        .baseUri(baseUrl)
                         .when()
                         .get("/xml");
 
@@ -110,11 +175,7 @@ public class ApiNegativeRequestTest {
                 response
         );
 
-        Assert.assertEquals(
-                response.getStatusCode(),
-                200,
-                "The XML fixture should return HTTP 200"
-        );
+        Assert.assertEquals(response.getStatusCode(), 200);
 
         String contentType = response.getHeader("Content-Type");
 
@@ -141,46 +202,65 @@ public class ApiNegativeRequestTest {
                 error.getMessage().contains(
                         "Expected application/json Content-Type"
                 ),
-                "The security helper should reject a non-JSON response"
+                "The helper should reject the XML response"
         );
     }
 
-    private String getEchoedRequestMediaType(
-            Response response,
-            String headerName) {
-
-        String contentType =
-                getEchoedRequestHeader(response, headerName);
-
-        // Ignore optional parameters such as charset=ISO-8859-1.
-        return contentType.split(";", 2)[0]
-                .trim()
-                .toLowerCase(Locale.ROOT);
-    }
-
-    private String getEchoedRequestHeader(
-            Response response,
-            String headerName) {
-
+    private String echoedRequestMediaType(Response response) {
         Map<String, Object> headers =
                 response.jsonPath().getMap("headers");
 
         Assert.assertNotNull(
                 headers,
-                "HTTPBin should return the echoed request headers"
+                "The local fixture should return echoed headers"
         );
 
         for (Map.Entry<String, Object> entry : headers.entrySet()) {
-            if (entry.getKey().equalsIgnoreCase(headerName)) {
-                return String.valueOf(entry.getValue());
+            if ("Content-Type".equalsIgnoreCase(entry.getKey())) {
+                return String.valueOf(entry.getValue())
+                        .split(";", 2)[0]
+                        .trim()
+                        .toLowerCase(Locale.ROOT);
             }
         }
 
-        Assert.fail(
-                "Echoed request header was not found: " + headerName
-        );
-
+        Assert.fail("Echoed Content-Type header was not found");
         return null;
+    }
+
+    private static String escapeJson(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    private static void sendResponse(
+            HttpExchange exchange,
+            int status,
+            String contentType,
+            String responseBody) throws IOException {
+
+        byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
+
+        try {
+            exchange.getResponseHeaders().set(
+                    "Content-Type",
+                    contentType
+            );
+
+            exchange.sendResponseHeaders(status, body.length);
+
+            try (OutputStream output = exchange.getResponseBody()) {
+                output.write(body);
+            }
+        } finally {
+            exchange.close();
+        }
     }
 
     private void logDiagnostics(
@@ -191,21 +271,14 @@ public class ApiNegativeRequestTest {
         String responseContentType =
                 response.getHeader("Content-Type");
 
-        String safeResponseContentType =
-                responseContentType == null
-                        ? "Not provided"
-                        : responseContentType;
+        if (responseContentType == null) {
+            responseContentType = "Not provided";
+        }
 
         System.out.println("Scenario: " + scenario);
-        System.out.println(
-                "Request Content-Type: " + requestContentType
-        );
-        System.out.println(
-                "Response Status: " + response.getStatusCode()
-        );
-        System.out.println(
-                "Response Content-Type: " + safeResponseContentType
-        );
+        System.out.println("Request Content-Type: " + requestContentType);
+        System.out.println("Response Status: " + response.getStatusCode());
+        System.out.println("Response Content-Type: " + responseContentType);
 
         ExtentTest extentTest = ExtentReportManager.getTest();
 
@@ -218,7 +291,7 @@ public class ApiNegativeRequestTest {
                     "HTTP Status Code: " + response.getStatusCode()
             );
             extentTest.info(
-                    "Response Content-Type: " + safeResponseContentType
+                    "Response Content-Type: " + responseContentType
             );
         }
     }
