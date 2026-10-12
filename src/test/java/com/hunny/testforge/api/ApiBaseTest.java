@@ -9,6 +9,9 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.testng.annotations.BeforeClass;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -23,6 +26,11 @@ public class ApiBaseTest extends ReportingBaseTest {
     private static final Pattern SENSITIVE_JSON_FIELD =
             Pattern.compile(
                     "(?i)(\"[^\"]*(?:password|passwd|token|authorization|auth|api.?key|secret|credential|email|phone|mobile|ssn|credit.?card|address|date.?of.?birth|cookie|session)[^\"]*\"\\s*:\\s*)(\"(?:\\\\.|[^\"\\\\])*\"|[^,}\\s]+)"
+            );
+
+    private static final Pattern SENSITIVE_QUERY_PARAMETER =
+            Pattern.compile(
+                    "(?i)(password|passwd|token|authorization|auth|api[_-]?key|secret|credential|email|phone|mobile|ssn|credit[_-]?card|address|date[_-]?of[_-]?birth|cookie|session|signature|(^|[_-])sig($|[_-]))"
             );
 
     protected RequestSpecification requestSpecification;
@@ -55,7 +63,9 @@ public class ApiBaseTest extends ReportingBaseTest {
                     String requestDetails =
                             requestSpec.getMethod()
                                     + " "
-                                    + requestSpec.getURI();
+                                    + sanitizeRequestUri(
+                                            requestSpec.getURI()
+                                    );
 
                     if (extentTest != null) {
                         extentTest.info(
@@ -136,6 +146,87 @@ public class ApiBaseTest extends ReportingBaseTest {
                     return response;
                 })
                 .build();
+    }
+
+    private static String sanitizeRequestUri(String requestUri) {
+        try {
+            URI uri = URI.create(requestUri);
+
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return "[URI omitted: could not safely sanitize]";
+            }
+
+            StringBuilder sanitized = new StringBuilder();
+
+            sanitized.append(uri.getScheme())
+                    .append("://")
+                    .append(uri.getHost());
+
+            if (uri.getPort() != -1) {
+                sanitized.append(':').append(uri.getPort());
+            }
+
+            if (uri.getRawPath() != null) {
+                sanitized.append(uri.getRawPath());
+            }
+
+            String rawQuery = uri.getRawQuery();
+
+            if (rawQuery != null) {
+                sanitized.append('?')
+                        .append(sanitizeQueryParameters(rawQuery));
+            }
+
+            // User information and fragments are intentionally omitted.
+            return sanitized.toString();
+
+        } catch (IllegalArgumentException exception) {
+            return "[URI omitted: could not safely sanitize]";
+        }
+    }
+
+    private static String sanitizeQueryParameters(String rawQuery) {
+        StringBuilder sanitized = new StringBuilder();
+        String[] parameters = rawQuery.split("&", -1);
+
+        for (int i = 0; i < parameters.length; i++) {
+            if (i > 0) {
+                sanitized.append('&');
+            }
+
+            String parameter = parameters[i];
+            int equalsIndex = parameter.indexOf('=');
+
+            String rawName = equalsIndex >= 0
+                    ? parameter.substring(0, equalsIndex)
+                    : parameter;
+
+            String decodedName;
+
+            try {
+                decodedName = URLDecoder.decode(
+                        rawName,
+                        StandardCharsets.UTF_8
+                );
+            } catch (IllegalArgumentException exception) {
+                // If the parameter name is malformed, don't log its value.
+                sanitized.append(rawName)
+                        .append("=[REDACTED]");
+                continue;
+            }
+
+            if (SENSITIVE_QUERY_PARAMETER
+                    .matcher(decodedName)
+                    .find()) {
+
+                sanitized.append(rawName)
+                        .append("=[REDACTED]");
+            } else {
+                sanitized.append(parameter);
+            }
+        }
+
+        return sanitized.toString();
     }
 
     private static String safeErrorResponseDetails(
