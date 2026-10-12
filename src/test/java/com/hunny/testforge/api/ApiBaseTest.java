@@ -148,7 +148,7 @@ public class ApiBaseTest extends ReportingBaseTest {
                 .build();
     }
 
-    // Package-private so tests in this package can verify sanitization.
+    // Package-private so unit tests can verify URI sanitization.
     static String sanitizeRequestUri(String requestUri) {
         try {
             URI uri = URI.create(requestUri);
@@ -186,7 +186,7 @@ public class ApiBaseTest extends ReportingBaseTest {
         }
     }
 
-    // Package-private so tests in this package can verify query masking.
+    // Package-private so unit tests can verify query masking.
     static String sanitizeQueryParameters(String rawQuery) {
         StringBuilder sanitized = new StringBuilder();
         String[] parameters = rawQuery.split("&", -1);
@@ -211,7 +211,7 @@ public class ApiBaseTest extends ReportingBaseTest {
                         StandardCharsets.UTF_8
                 );
             } catch (IllegalArgumentException exception) {
-                // If the parameter name is malformed, hide its value.
+                // If the name is malformed, hide its value.
                 sanitized.append(rawName)
                         .append("=[REDACTED]");
                 continue;
@@ -243,7 +243,11 @@ public class ApiBaseTest extends ReportingBaseTest {
                     + "as JSON.";
         }
 
-        String body = response.asString();
+        return sanitizeErrorResponseBody(response.asString());
+    }
+
+    // Package-private to enable isolated unit tests without HTTP calls.
+    static String sanitizeErrorResponseBody(String body) {
 
         if (body == null || body.isBlank()) {
             return "JSON response body is empty.";
