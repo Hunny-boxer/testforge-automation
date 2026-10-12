@@ -148,7 +148,8 @@ public class ApiBaseTest extends ReportingBaseTest {
                 .build();
     }
 
-    private static String sanitizeRequestUri(String requestUri) {
+    // Package-private so tests in this package can verify sanitization.
+    static String sanitizeRequestUri(String requestUri) {
         try {
             URI uri = URI.create(requestUri);
 
@@ -185,7 +186,8 @@ public class ApiBaseTest extends ReportingBaseTest {
         }
     }
 
-    private static String sanitizeQueryParameters(String rawQuery) {
+    // Package-private so tests in this package can verify query masking.
+    static String sanitizeQueryParameters(String rawQuery) {
         StringBuilder sanitized = new StringBuilder();
         String[] parameters = rawQuery.split("&", -1);
 
@@ -209,7 +211,7 @@ public class ApiBaseTest extends ReportingBaseTest {
                         StandardCharsets.UTF_8
                 );
             } catch (IllegalArgumentException exception) {
-                // If the parameter name is malformed, don't log its value.
+                // If the parameter name is malformed, hide its value.
                 sanitized.append(rawName)
                         .append("=[REDACTED]");
                 continue;
