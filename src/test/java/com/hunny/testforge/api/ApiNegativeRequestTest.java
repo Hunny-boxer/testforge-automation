@@ -51,9 +51,9 @@ public class ApiNegativeRequestTest {
         );
 
         Assert.assertEquals(
-                getEchoedRequestHeader(response, "Content-Type"),
+                getEchoedRequestMediaType(response, "Content-Type"),
                 "application/json",
-                "The request Content-Type should be preserved"
+                "The echoed request media type should be application/json"
         );
     }
 
@@ -89,9 +89,9 @@ public class ApiNegativeRequestTest {
         );
 
         Assert.assertEquals(
-                getEchoedRequestHeader(response, "Content-Type"),
+                getEchoedRequestMediaType(response, "Content-Type"),
                 "text/plain",
-                "The request Content-Type should remain text/plain"
+                "The echoed request media type should remain text/plain"
         );
     }
 
@@ -143,6 +143,19 @@ public class ApiNegativeRequestTest {
                 ),
                 "The security helper should reject a non-JSON response"
         );
+    }
+
+    private String getEchoedRequestMediaType(
+            Response response,
+            String headerName) {
+
+        String contentType =
+                getEchoedRequestHeader(response, headerName);
+
+        // Ignore optional parameters such as charset=ISO-8859-1.
+        return contentType.split(";", 2)[0]
+                .trim()
+                .toLowerCase(Locale.ROOT);
     }
 
     private String getEchoedRequestHeader(
