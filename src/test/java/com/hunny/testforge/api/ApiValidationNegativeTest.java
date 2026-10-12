@@ -140,6 +140,7 @@ public class ApiValidationNegativeTest {
         }
 
         return given()
+                .config(ApiBaseTest.defaultRestAssuredConfig())
                 .baseUri(baseUrl)
                 .header("Authorization", "Bearer " + token);
     }
