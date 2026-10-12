@@ -9,12 +9,21 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.testng.annotations.BeforeClass;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static io.restassured.RestAssured.enableLoggingOfRequestAndResponseIfValidationFails;
 import static io.restassured.http.ContentType.JSON;
 
 public class ApiBaseTest extends ReportingBaseTest {
+
+    private static final int MAX_ERROR_BODY_LENGTH = 500;
+
+    private static final Pattern SENSITIVE_JSON_FIELD =
+            Pattern.compile(
+                    "(?i)(\"[^\"]*(?:password|passwd|token|authorization|auth|api.?key|secret|credential|email|phone|mobile|ssn|credit.?card|address|date.?of.?birth|cookie|session)[^\"]*\"\\s*:\\s*)(\"(?:\\\\.|[^\"\\\\])*\"|[^,}\\s]+)"
+            );
 
     protected RequestSpecification requestSpecification;
 
@@ -28,6 +37,7 @@ public class ApiBaseTest extends ReportingBaseTest {
         if (requestSpecification == null) {
             requestSpecification = buildRequestSpecification();
         }
+
         return requestSpecification;
     }
 
@@ -53,32 +63,128 @@ public class ApiBaseTest extends ReportingBaseTest {
                         );
                     }
 
-                    Response response =
-                            context.next(requestSpec, responseSpec);
+                    Response response;
+
+                    try {
+                        response = context.next(
+                                requestSpec,
+                                responseSpec
+                        );
+                    } catch (RuntimeException exception) {
+
+                        if (extentTest != null) {
+                            extentTest.warning(
+                                    "API request execution failed before "
+                                            + "a response was received."
+                            );
+
+                            extentTest.info(
+                                    "Exception type: "
+                                            + exception.getClass()
+                                                    .getSimpleName()
+                            );
+                        }
+
+                        throw exception;
+                    }
 
                     long responseTimeMs = TimeUnit.NANOSECONDS.toMillis(
                             System.nanoTime() - startNanos
                     );
 
+                    int statusCode = response.getStatusCode();
+                    String contentType =
+                            response.getHeader("Content-Type");
+
                     if (extentTest != null) {
+
                         extentTest.info(
-                                "HTTP Status Code: "
-                                        + response.getStatusCode()
+                                "HTTP Status Code: " + statusCode
                         );
 
                         extentTest.info(
                                 "Response Content-Type: "
-                                        + response.getHeader("Content-Type")
+                                        + (contentType == null
+                                                ? "Not provided"
+                                                : contentType)
                         );
 
                         extentTest.info(
                                 "Response Time: "
                                         + responseTimeMs + " ms"
                         );
+
+                        if (statusCode >= 400) {
+                            extentTest.warning(
+                                    "HTTP error-status response received. "
+                                            + "This may be expected for "
+                                            + "negative API tests."
+                            );
+
+                            extentTest.info(
+                                    "Error diagnostics: "
+                                            + safeErrorResponseDetails(
+                                                    response,
+                                                    contentType
+                                            )
+                            );
+
+                            logCorrelationId(response, extentTest);
+                        }
                     }
 
                     return response;
                 })
                 .build();
+    }
+
+    private static String safeErrorResponseDetails(
+            Response response,
+            String contentType) {
+
+        if (contentType == null
+                || !contentType.toLowerCase(Locale.ROOT)
+                        .contains("json")) {
+
+            return "Response body omitted because it is not identified "
+                    + "as JSON.";
+        }
+
+        String body = response.asString();
+
+        if (body == null || body.isBlank()) {
+            return "JSON response body is empty.";
+        }
+
+        String sanitizedBody =
+                SENSITIVE_JSON_FIELD.matcher(body)
+                        .replaceAll("$1\"[REDACTED]\"");
+
+        if (sanitizedBody.length() > MAX_ERROR_BODY_LENGTH) {
+            sanitizedBody =
+                    sanitizedBody.substring(0, MAX_ERROR_BODY_LENGTH)
+                            + "... [truncated]";
+        }
+
+        return "Sanitized JSON response: " + sanitizedBody;
+    }
+
+    private static void logCorrelationId(
+            Response response,
+            ExtentTest extentTest) {
+
+        String requestId = response.getHeader("X-Request-ID");
+
+        if (requestId == null || requestId.isBlank()) {
+            requestId = response.getHeader("X-Correlation-ID");
+        }
+
+        if (requestId != null
+                && requestId.matches("[A-Za-z0-9._:-]{1,128}")) {
+
+            extentTest.info(
+                    "Response correlation ID: " + requestId
+            );
+        }
     }
 }
