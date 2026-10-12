@@ -22,6 +22,24 @@ The framework combines Selenium WebDriver, REST Assured, TestNG, Maven, ExtentRe
 
 ---
 
+## 📸 See TestForge in Action
+
+### GitHub Actions — Continuous Integration
+
+TestForge runs dedicated UI and API smoke, regression, and performance suites through GitHub Actions. The screenshot below shows the CI workflow view.
+
+![TestForge GitHub Actions CI run](docs/testforge-ci-run.png)
+
+[View the latest CI runs](https://github.com/Hunny-boxer/testforge-automation/actions)
+
+### ExtentReports — Test Execution Report
+
+The repository includes a sample ExtentReports screenshot to illustrate how test execution results can be presented for review.
+
+![TestForge ExtentReports sample](docs/extent-report-sample.png)
+
+---
+
 ## ✨ Key Features
 
 - **UI automation:** Selenium WebDriver with the Page Object Model.
