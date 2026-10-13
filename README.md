@@ -1,4 +1,3 @@
-
 # 🚀 TestForge — UI & API Automation Framework
 
 [![TestForge CI](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml/badge.svg)](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml)
@@ -158,21 +157,18 @@ The validation tests use the configured GoREST test endpoint. Their assertions d
 
 ## ✅ Verified CI Results
 
-The following results were verified from successful GitHub Actions Run #180 on October 12, 2026.
+The following results were verified from successful GitHub Actions Run #212 on October 13, 2026, following the GitHub Actions dependency updates.
 
 | Metric | Result |
 |---|---:|
-| Full-suite tests | 48 passed |
+| Full-suite tests | 50 passed |
 | Full-suite failures | 0 |
 | Full-suite skipped tests | 0 |
-| API regression tests | 32 passed |
-| API regression failures | 0 |
-| API regression skipped tests | 0 |
 | Workflow jobs | 6 passed |
 
-[View successful Run #180](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38234382760)
+[View successful Run #212](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38394692540)
 
-These figures describe that particular run. Test counts can change as the framework evolves, and separate suites can overlap, so their totals should not be added together to calculate unique tests.
+These figures describe that specific run and are based on the Full Test Suite job. Test counts can change as the framework evolves, and separate suites can overlap, so their totals should not be added together to calculate unique tests.
 
 ## ⚙️ Configuration Management
 
