@@ -177,7 +177,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: Full Suite Test Results
           path: target/surefire-reports/TEST-*.xml
@@ -229,7 +229,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: UI Smoke Test Results
           path: target/surefire-reports/TEST-*.xml
@@ -265,7 +265,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: UI Regression Test Results
           path: target/surefire-reports/TEST-*.xml
@@ -297,7 +297,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: API Smoke Test Results
           path: target/surefire-reports/TEST-*.xml
@@ -331,7 +331,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: API Regression Test Results
           path: target/surefire-reports/TEST-*.xml
@@ -363,7 +363,7 @@ jobs:
 
       - name: Publish JUnit Test Results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: API Performance Test Results
           path: target/surefire-reports/TEST-*.xml
