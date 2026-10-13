@@ -186,7 +186,7 @@ jobs:
 
       - name: Upload Full Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-full
           path: test-output/ExtentReport.html
@@ -194,7 +194,7 @@ jobs:
 
       - name: Upload JaCoCo Coverage Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-coverage-report
           path: target/site/jacoco/
@@ -202,7 +202,7 @@ jobs:
 
       - name: Upload JaCoCo Coverage Data
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-coverage-data
           path: target/jacoco.exec
@@ -238,7 +238,7 @@ jobs:
 
       - name: Upload Smoke Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-smoke
           path: test-output/ExtentReport.html
@@ -274,7 +274,7 @@ jobs:
 
       - name: Upload Regression Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-regression
           path: test-output/ExtentReport.html
@@ -306,7 +306,7 @@ jobs:
 
       - name: Upload API Smoke Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-api-smoke
           path: test-output/ExtentReport.html
@@ -340,7 +340,7 @@ jobs:
 
       - name: Upload API Regression Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-api-regression
           path: test-output/ExtentReport.html
@@ -372,7 +372,7 @@ jobs:
 
       - name: Upload API Performance Extent Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extent-report-api-performance
           path: test-output/ExtentReport.html
