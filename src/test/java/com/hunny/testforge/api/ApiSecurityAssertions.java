@@ -4,8 +4,6 @@ package com.hunny.testforge.api;
 import io.restassured.response.Response;
 import org.testng.Assert;
 
-import java.util.Locale;
-
 public final class ApiSecurityAssertions {
 
     private ApiSecurityAssertions() {
@@ -35,9 +33,9 @@ public final class ApiSecurityAssertions {
         );
 
         Assert.assertTrue(
-                contentType.toLowerCase(Locale.ROOT)
-                        .contains("application/json"),
-                "Expected application/json Content-Type"
+                ApiBaseTest.isJsonContentType(contentType),
+                "Expected application/json Content-Type "
+                        + "(or application/*+json)"
         );
 
         Assert.assertEquals(
