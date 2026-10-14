@@ -1,9 +1,8 @@
-
 # Changelog
 
 All notable changes to TestForge Automation are documented here.
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-10-14
 
 ### Added
 - Java 17-based UI and API test automation framework.
@@ -31,10 +30,10 @@ All notable changes to TestForge Automation are documented here.
 - Automated coverage enforcement requiring at least 90% instruction coverage and 75% branch coverage.
 
 ### Release validation
-- GitHub Actions runs the full suite along with UI smoke, UI regression, API smoke, API regression, and API performance suites.
-- Release readiness requires all six test-suite jobs to pass.
-- JaCoCo coverage checks and CodeQL analysis must pass before the stable release is published.
+- All six GitHub Actions test-suite jobs passed for the v1.0.0 release commit.
+- Both CodeQL security-analysis jobs passed before publication.
+- JaCoCo coverage checks passed as part of release validation.
 
 ### Release status
-- This section describes the planned stable v1.0.0 release.
-- The release will be considered published only after the `v1.0.0` tag and GitHub release are created.
+- TestForge v1.0.0 was published as the stable release on 2026-10-14.
+- [View the v1.0.0 GitHub release](https://github.com/Hunny-boxer/testforge-automation/releases/tag/v1.0.0).

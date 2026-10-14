@@ -1,11 +1,17 @@
-
 # Security Policy
 
 ## Supported Versions
 
-TestForge is an automation framework currently in active development. No stable, versioned release has been published yet.
+The latest stable release is TestForge v1.0.0.
 
-For now, security issues will be assessed against the latest code on the `main` branch. When stable releases are published, supported versions will be documented here.
+| Version | Supported |
+|---|---|
+| 1.0.x | Yes — latest stable patch release |
+| Release candidates (e.g., 1.0.0-rc.1) | No |
+
+Security issues are assessed against the latest stable release and the latest code on the `main` branch. Users are encouraged to upgrade to the latest stable patch release where possible.
+
+Security fixes and support for future versions will be documented as new releases become available.
 
 ## Reporting a Vulnerability
 
