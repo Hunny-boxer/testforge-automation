@@ -2,6 +2,7 @@ package com.hunny.testforge.driver;
 
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
@@ -39,15 +40,8 @@ public class DriverFactoryTest {
         Assert.assertSame(DriverFactory.getDriver(), firstDriver);
 
         DriverFactory.initializeDriver("CHROME", () -> {
-            Assert.assertEquals(
-                    quitCalls.get(),
-                    1,
-                    "Existing driver should be closed before replacement"
-            );
-            Assert.assertNull(
-                    DriverFactory.getDriver(),
-                    "Old driver reference should be cleared first"
-            );
+            Assert.assertEquals(quitCalls.get(), 1);
+            Assert.assertNull(DriverFactory.getDriver());
             return replacementDriver;
         });
 
@@ -112,7 +106,88 @@ public class DriverFactoryTest {
 
         Assert.assertNull(
                 DriverFactory.getDriver(),
-                "Driver reference should be cleared even when quit fails"
+                "Driver reference should be cleared when quit fails"
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldIsolateDriverReferencesBetweenThreads() {
+        AtomicInteger mainThreadQuitCalls = new AtomicInteger();
+        AtomicInteger workerThreadQuitCalls = new AtomicInteger();
+
+        WebDriver mainThreadDriver =
+                fakeDriver(mainThreadQuitCalls, false);
+
+        DriverFactory.initializeDriver(
+                "chrome",
+                () -> mainThreadDriver
+        );
+
+        AtomicReference<Throwable> workerFailure =
+                new AtomicReference<>();
+
+        Thread worker = new Thread(() -> {
+            try {
+                Assert.assertNull(
+                        DriverFactory.getDriver(),
+                        "A new thread should not see another thread's driver"
+                );
+
+                WebDriver workerDriver =
+                        fakeDriver(workerThreadQuitCalls, false);
+
+                DriverFactory.initializeDriver(
+                        "chrome",
+                        () -> workerDriver
+                );
+
+                Assert.assertSame(
+                        DriverFactory.getDriver(),
+                        workerDriver
+                );
+
+                DriverFactory.quitDriver();
+
+                Assert.assertNull(
+                        DriverFactory.getDriver(),
+                        "Worker thread should remove its driver after cleanup"
+                );
+
+                Assert.assertEquals(workerThreadQuitCalls.get(), 1);
+            } catch (Throwable failure) {
+                workerFailure.set(failure);
+            } finally {
+                DriverFactory.quitDriver();
+            }
+        }, "driver-factory-isolation-test");
+
+        worker.start();
+
+        try {
+            worker.join();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError(
+                    "Interrupted while waiting for worker thread",
+                    exception
+            );
+        }
+
+        Assert.assertNull(
+                workerFailure.get(),
+                "Worker thread test failed: " + workerFailure.get()
+        );
+
+        Assert.assertSame(
+                DriverFactory.getDriver(),
+                mainThreadDriver,
+                "Worker cleanup must not remove the main thread's driver"
+        );
+
+        Assert.assertEquals(
+                mainThreadQuitCalls.get(),
+                0,
+                "Worker cleanup must not quit the main thread's driver"
         );
     }
 
@@ -147,15 +222,10 @@ public class DriverFactoryTest {
 
         WebDriver driver = DriverFactory.getDriver();
 
-        Assert.assertNotNull(
-                driver,
-                "Chrome driver should be initialized"
-        );
-
+        Assert.assertNotNull(driver);
         Assert.assertTrue(
                 driver.getWindowHandle() != null
-                        && !driver.getWindowHandle().isEmpty(),
-                "Chrome should have an active browser window"
+                        && !driver.getWindowHandle().isEmpty()
         );
     }
 
