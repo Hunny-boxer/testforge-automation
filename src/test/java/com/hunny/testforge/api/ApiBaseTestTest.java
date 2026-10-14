@@ -37,15 +37,17 @@ public class ApiBaseTestTest {
     }
 
     @Test(groups = {"UNIT", "REGRESSION"})
-    public void shouldPreserveSafeQueryParameters() {
+    public void shouldRedactPathAndPreserveSafeQueryParameters() {
         String result = ApiBaseTest.sanitizeRequestUri(
                 "https://api.example.test/users/1?sort=desc&page=2"
         );
 
         Assert.assertEquals(
                 result,
-                "https://api.example.test/users/1?sort=desc&page=2"
+                "https://api.example.test/[PATH REDACTED]?sort=desc&page=2"
         );
+
+        Assert.assertFalse(result.contains("/users/1"));
     }
 
     @Test(groups = {"UNIT", "REGRESSION"})
@@ -104,7 +106,7 @@ public class ApiBaseTestTest {
     }
 
     @Test(groups = {"UNIT", "REGRESSION"})
-    public void shouldOmitUserInformationAndFragmentFromUri() {
+    public void shouldOmitUserInformationPathAndFragmentFromUri() {
         String result = ApiBaseTest.sanitizeRequestUri(
                 "https://user:password@api.example.test/users/1"
                         + "?page=2#private-section"
@@ -112,10 +114,11 @@ public class ApiBaseTestTest {
 
         Assert.assertEquals(
                 result,
-                "https://api.example.test/users/1?page=2"
+                "https://api.example.test/[PATH REDACTED]?page=2"
         );
 
         Assert.assertFalse(result.contains("password"));
+        Assert.assertFalse(result.contains("/users/1"));
         Assert.assertFalse(result.contains("private-section"));
     }
 
@@ -190,5 +193,64 @@ public class ApiBaseTestTest {
         );
 
         Assert.assertTrue(result.endsWith("... [truncated]"));
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldAcceptStandardJsonContentType() {
+        Assert.assertTrue(
+                ApiBaseTest.isJsonContentType("application/json")
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldAcceptJsonContentTypeWithCharset() {
+        Assert.assertTrue(
+                ApiBaseTest.isJsonContentType(
+                        "application/json; charset=UTF-8"
+                )
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldAcceptApplicationVendorJsonContentType() {
+        Assert.assertTrue(
+                ApiBaseTest.isJsonContentType(
+                        "application/vnd.api+json"
+                )
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldRejectJsonpContentType() {
+        Assert.assertFalse(
+                ApiBaseTest.isJsonContentType("application/jsonp")
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldRejectNonJsonContentType() {
+        Assert.assertFalse(
+                ApiBaseTest.isJsonContentType("text/notjson")
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldRejectMalformedJsonMediaType() {
+        Assert.assertFalse(
+                ApiBaseTest.isJsonContentType(
+                        "application/foo bar+json"
+                )
+        );
+
+        Assert.assertFalse(
+                ApiBaseTest.isJsonContentType("application/+json")
+        );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldRejectNullOrBlankContentType() {
+        Assert.assertFalse(ApiBaseTest.isJsonContentType(null));
+        Assert.assertFalse(ApiBaseTest.isJsonContentType(""));
+        Assert.assertFalse(ApiBaseTest.isJsonContentType("   "));
     }
 }

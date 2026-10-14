@@ -54,8 +54,8 @@ public class ApiBaseTest extends ReportingBaseTest {
 
     /**
      * Provides bounded connection and socket timeouts.
-     * Use this configuration for other REST Assured requests
-     * that do not inherit the shared API request specification.
+     * Use this configuration for requests that do not inherit
+     * the shared API request specification.
      */
     public static RestAssuredConfig defaultRestAssuredConfig() {
         HttpClientConfig httpClientConfig =
@@ -114,6 +114,8 @@ public class ApiBaseTest extends ReportingBaseTest {
                                             + "was received."
                             );
 
+                            // Exception messages can contain URLs
+                            // or other sensitive request information.
                             extentTest.info(
                                     "Exception type: "
                                             + exception.getClass()
@@ -174,7 +176,14 @@ public class ApiBaseTest extends ReportingBaseTest {
                 .build();
     }
 
-    // Package-private so unit tests can verify URI sanitization.
+    /**
+     * Creates a safe diagnostic URI.
+     *
+     * The entire path is redacted because path segments may contain
+     * identifiers, personal information, or credentials.
+     * Query parameters are retained only after value sanitization.
+     * URI user information and fragments are omitted.
+     */
     static String sanitizeRequestUri(String requestUri) {
         try {
             URI uri = URI.create(requestUri);
@@ -193,8 +202,10 @@ public class ApiBaseTest extends ReportingBaseTest {
                 sanitized.append(':').append(uri.getPort());
             }
 
-            if (uri.getRawPath() != null) {
-                sanitized.append(uri.getRawPath());
+            String rawPath = uri.getRawPath();
+
+            if (rawPath != null && !rawPath.isEmpty()) {
+                sanitized.append("/[PATH REDACTED]");
             }
 
             String rawQuery = uri.getRawQuery();
@@ -204,7 +215,6 @@ public class ApiBaseTest extends ReportingBaseTest {
                         .append(sanitizeQueryParameters(rawQuery));
             }
 
-            // User information and fragments are intentionally omitted.
             return sanitized.toString();
 
         } catch (IllegalArgumentException exception) {
@@ -212,7 +222,7 @@ public class ApiBaseTest extends ReportingBaseTest {
         }
     }
 
-    // Package-private so unit tests can verify query masking.
+    // Package-private so unit tests can verify query-value masking.
     static String sanitizeQueryParameters(String rawQuery) {
         StringBuilder sanitized = new StringBuilder();
         String[] parameters = rawQuery.split("&", -1);
@@ -237,7 +247,7 @@ public class ApiBaseTest extends ReportingBaseTest {
                         StandardCharsets.UTF_8
                 );
             } catch (IllegalArgumentException exception) {
-                // If the name is malformed, hide its value.
+                // A malformed parameter name is handled conservatively.
                 sanitized.append(rawName)
                         .append("=[REDACTED]");
                 continue;
@@ -257,16 +267,75 @@ public class ApiBaseTest extends ReportingBaseTest {
         return sanitized.toString();
     }
 
+    /**
+     * Accepts application/json and valid application-specific +json
+     * media types. Rejects lookalikes such as application/jsonp,
+     * text/notjson, and malformed media-type tokens.
+     */
+    static boolean isJsonContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return false;
+        }
+
+        String mediaType = contentType
+                .split(";", 2)[0]
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        int slashIndex = mediaType.indexOf('/');
+
+        if (slashIndex <= 0
+                || slashIndex != mediaType.lastIndexOf('/')) {
+            return false;
+        }
+
+        String type = mediaType.substring(0, slashIndex).trim();
+        String subtype = mediaType.substring(slashIndex + 1).trim();
+
+        if (!"application".equals(type)
+                || !isValidMediaTypeToken(type)
+                || !isValidMediaTypeToken(subtype)) {
+            return false;
+        }
+
+        return "json".equals(subtype)
+                || (subtype.length() > 5 && subtype.endsWith("+json"));
+    }
+
+    /**
+     * Validates a MIME token without whitespace, separators,
+     * or other invalid characters.
+     */
+    private static boolean isValidMediaTypeToken(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+
+        String allowedPunctuation = "!#$%&'*+-.^_`|~";
+
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+
+            boolean alphanumeric =
+                    (c >= 'a' && c <= 'z')
+                            || (c >= 'A' && c <= 'Z')
+                            || (c >= '0' && c <= '9');
+
+            if (!alphanumeric && allowedPunctuation.indexOf(c) < 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static String safeErrorResponseDetails(
             Response response,
             String contentType) {
 
-        if (contentType == null
-                || !contentType.toLowerCase(Locale.ROOT)
-                        .contains("json")) {
-
-            return "Response body omitted because it is not identified "
-                    + "as JSON.";
+        if (!isJsonContentType(contentType)) {
+            return "Response body omitted because its Content-Type "
+                    + "is not an accepted JSON media type.";
         }
 
         return sanitizeErrorResponseBody(response.asString());
