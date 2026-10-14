@@ -53,20 +53,42 @@ public final class ConfigManager {
             return null;
         }
 
-        String systemValue = System.getProperty(key);
+        return resolve(
+                key,
+                System.getProperty(key),
+                System.getenv(toEnvironmentVariable(key)),
+                PROPERTIES
+        );
+    }
+
+    /**
+     * Resolves a configuration value independently of the machine's
+     * actual system properties and environment variables.
+     * This makes precedence and fallback behavior easy to unit test.
+     */
+    static String resolve(
+            String key,
+            String systemValue,
+            String environmentValue,
+            Properties properties) {
+
+        if (key == null || key.isBlank()) {
+            return null;
+        }
 
         if (isConfigured(systemValue)) {
             return systemValue.trim();
         }
 
-        String environmentValue =
-                System.getenv(toEnvironmentVariable(key));
-
         if (isConfigured(environmentValue)) {
             return environmentValue.trim();
         }
 
-        return PROPERTIES.getProperty(key);
+        if (properties == null) {
+            return null;
+        }
+
+        return properties.getProperty(key);
     }
 
     public static String getBaseUrl() {
@@ -93,7 +115,8 @@ public final class ConfigManager {
         return value != null && !value.isBlank();
     }
 
-    private static String toEnvironmentVariable(String key) {
+    // Package-private so the environment-variable convention is testable.
+    static String toEnvironmentVariable(String key) {
         String normalizedKey = key.replaceAll(
                 "([a-z0-9])([A-Z])",
                 "$1_$2"
