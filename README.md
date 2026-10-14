@@ -1,3 +1,4 @@
+
 # 🚀 TestForge — UI & API Automation Framework
 
 [![TestForge CI](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml/badge.svg)](https://github.com/Hunny-boxer/testforge-automation/actions/workflows/maven.yml)
@@ -55,6 +56,10 @@ The repository includes a sample ExtentReports screenshot to illustrate how test
 - **JUnit reporting:** Automated test results published in GitHub Actions.
 - **Code coverage:** JaCoCo reports and raw coverage-data artifacts.
 - **Continuous integration:** Six independent GitHub Actions jobs for UI and API testing.
+- **Thread-safe browser references:** `ThreadLocal<WebDriver>` isolates browser references between threads.
+- **Browser lifecycle handling:** Tests cover driver replacement, initialization failures, and cleanup behavior.
+- **Configuration test isolation:** Deterministic tests cover configuration priority, fallback behavior, and defaults.
+- **Secure diagnostics:** API diagnostic logging sanitizes sensitive request information.
 
 ## 🏗️ Architecture
 
@@ -73,7 +78,7 @@ flowchart TD
         D --> I["TestNG UI Tests"]
         E --> I
         I --> J["BaseTest / DriverFactory"]
-        J --> K["Selenium WebDriver"]
+        J --> K["ThreadLocal WebDriver"]
         K --> L["Page Objects"]
     end
 
@@ -104,7 +109,7 @@ flowchart TD
 | Component | Responsibility |
 |---|---|
 | `ConfigManager` | Loads settings from system properties, environment variables, or `config.properties` |
-| `DriverFactory` | Manages Selenium WebDriver creation and cleanup |
+| `DriverFactory` | Manages thread-local Selenium WebDriver creation and cleanup |
 | `GooglePage` | Encapsulates UI interactions using the Page Object Model |
 | `ApiBaseTest` | Shared API setup, safe URI diagnostics, and sanitized error logging |
 | `ApiEndpoints` | Centralized API endpoint definitions |
@@ -114,6 +119,8 @@ flowchart TD
 | TestNG | Test execution, groups, assertions, and suite configuration |
 | Maven | Dependency management, test execution, and build lifecycle |
 | GitHub Actions | CI execution, test summaries, and report artifacts |
+| JaCoCo | Code coverage reporting and coverage quality gates |
+| CodeQL | Static analysis for security-related code issues |
 
 ## 🧪 Automated Test Coverage
 
@@ -122,6 +129,8 @@ TestForge combines unit, UI, API, security, negative, and performance tests.
 ### UI testing
 
 The UI layer uses Selenium WebDriver and page objects to organize browser interactions. Dedicated smoke and regression jobs execute the configured UI test classes.
+
+Driver lifecycle tests cover browser creation, replacement, cleanup, failure handling, and thread-local isolation. Thread-safe driver storage is a foundation for future parallel test execution; parallel execution is not enabled by this change.
 
 ### API testing
 
@@ -157,16 +166,20 @@ The validation tests use the configured GoREST test endpoint. Their assertions d
 
 ## ✅ Verified CI Results
 
-The following results were verified from successful GitHub Actions Run #212 on October 13, 2026, following the GitHub Actions dependency updates.
+The following results were verified from successful GitHub Actions Run #234 on October 14, 2026, after the browser lifecycle and thread-isolation improvements were merged into `main`.
 
 | Metric | Result |
 |---|---:|
-| Full-suite tests | 50 passed |
+| Full-suite tests | 71 passed |
 | Full-suite failures | 0 |
+| Full-suite errors | 0 |
 | Full-suite skipped tests | 0 |
 | Workflow jobs | 6 passed |
+| JaCoCo coverage checks | Passed |
 
-[View successful Run #212](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38394692540)
+[View successful Run #234](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38595946777)
+
+[View successful CodeQL run](https://github.com/Hunny-boxer/testforge-automation/actions/runs/38595947857)
 
 These figures describe that specific run and are based on the Full Test Suite job. Test counts can change as the framework evolves, and separate suites can overlap, so their totals should not be added together to calculate unique tests.
 
@@ -269,6 +282,11 @@ Artifacts are retained according to the workflow's configured retention settings
 ## 📈 JaCoCo Code Coverage
 
 The Full Test Suite uses Maven verification to generate JaCoCo coverage outputs.
+
+The configured quality gates require:
+
+- **Instruction coverage:** at least 90%.
+- **Branch coverage:** at least 75%.
 
 | Artifact | Contents |
 |---|---|
@@ -383,6 +401,7 @@ Replace the placeholder locally with your own token. Never commit the token or s
 ```text
 testforge-automation/
 ├── .github/
+│   ├── dependabot.yml
 │   └── workflows/
 │       └── maven.yml
 ├── docs/
@@ -399,7 +418,9 @@ testforge-automation/
 │   │   │   └── pages/
 │   │   │       └── GooglePage.java
 │   │   └── resources/
-│   │       └── config.properties
+│   │       ├── config.properties
+│   │       ├── testng-api-regression.xml
+│   │       └── testng-api-smoke.xml
 │   └── test/
 │       ├── java/com/hunny/testforge/
 │       │   ├── api/
@@ -415,7 +436,8 @@ testforge-automation/
 │           └── testng*.xml
 ├── pom.xml
 ├── LICENSE
-└── README.md
+├── README.md
+└── SECURITY.md
 ```
 
 ## 🗺️ Roadmap
