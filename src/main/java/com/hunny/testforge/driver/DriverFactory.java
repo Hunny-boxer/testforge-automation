@@ -9,7 +9,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 public class DriverFactory {
 
-    private static WebDriver driver;
+    private static final ThreadLocal<WebDriver> DRIVER =
+            new ThreadLocal<>();
 
     private DriverFactory() {
         // Utility class; prevent unnecessary instances.
@@ -23,7 +24,7 @@ public class DriverFactory {
         initializeDriver(browser, DriverFactory::createChromeDriver);
     }
 
-    // Package-private overload allows lifecycle tests without launching Chrome.
+    // Allows lifecycle tests without launching Chrome.
     static void initializeDriver(
             String browser,
             Supplier<WebDriver> driverSupplier) {
@@ -34,8 +35,7 @@ public class DriverFactory {
             );
         }
 
-        // Close any existing session before replacing it.
-        if (driver != null) {
+        if (DRIVER.get() != null) {
             quitDriver();
         }
 
@@ -47,7 +47,7 @@ public class DriverFactory {
             );
         }
 
-        driver = newDriver;
+        DRIVER.set(newDriver);
     }
 
     private static WebDriver createChromeDriver() {
@@ -63,15 +63,17 @@ public class DriverFactory {
     }
 
     public static WebDriver getDriver() {
-        return driver;
+        return DRIVER.get();
     }
 
     public static void quitDriver() {
-        if (driver != null) {
+        WebDriver currentDriver = DRIVER.get();
+
+        if (currentDriver != null) {
             try {
-                driver.quit();
+                currentDriver.quit();
             } finally {
-                driver = null;
+                DRIVER.remove();
             }
         }
     }
