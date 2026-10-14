@@ -1,4 +1,3 @@
-
 package com.hunny.testforge.driver;
 
 import org.openqa.selenium.WebDriver;
@@ -24,6 +23,32 @@ public class DriverFactoryTest {
                 exception.getMessage(),
                 "Unsupported browser: firefox"
         );
+    }
+
+    @Test(groups = {"UNIT", "REGRESSION"})
+    public void shouldUseConfiguredBrowserWhenNoArgumentIsProvided() {
+        String originalBrowser = System.getProperty("browser");
+
+        try {
+            System.setProperty("browser", "firefox");
+
+            IllegalArgumentException exception = Assert.expectThrows(
+                    IllegalArgumentException.class,
+                    DriverFactory::initializeDriver
+            );
+
+            Assert.assertEquals(
+                    exception.getMessage(),
+                    "Unsupported browser: firefox",
+                    "The no-argument method should use the configured browser"
+            );
+        } finally {
+            if (originalBrowser == null) {
+                System.clearProperty("browser");
+            } else {
+                System.setProperty("browser", originalBrowser);
+            }
+        }
     }
 
     @Test(groups = {"UNIT", "SMOKE"})
