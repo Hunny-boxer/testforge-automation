@@ -7,7 +7,7 @@
 
     <groupId>com.hunny.testforge</groupId>
     <artifactId>testforge-automation</artifactId>
-    <version>1.0.0-rc.1</version>
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
