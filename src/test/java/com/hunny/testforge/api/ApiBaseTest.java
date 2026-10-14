@@ -54,8 +54,8 @@ public class ApiBaseTest extends ReportingBaseTest {
 
     /**
      * Provides bounded connection and socket timeouts.
-     * Use this configuration for other REST Assured requests
-     * that do not inherit the shared API request specification.
+     * Use this configuration for requests that do not inherit
+     * the shared API request specification.
      */
     public static RestAssuredConfig defaultRestAssuredConfig() {
         HttpClientConfig httpClientConfig =
@@ -114,6 +114,8 @@ public class ApiBaseTest extends ReportingBaseTest {
                                             + "was received."
                             );
 
+                            // Avoid logging exception messages because
+                            // they can contain URLs or request details.
                             extentTest.info(
                                     "Exception type: "
                                             + exception.getClass()
@@ -174,7 +176,13 @@ public class ApiBaseTest extends ReportingBaseTest {
                 .build();
     }
 
-    // Package-private so unit tests can verify URI sanitization.
+    /**
+     * Builds a safe diagnostic URI.
+     *
+     * The entire path is omitted because arbitrary path segments can
+     * contain IDs, personal data, or credentials. Query parameters
+     * are retained only after applying the query-value sanitizer.
+     */
     static String sanitizeRequestUri(String requestUri) {
         try {
             URI uri = URI.create(requestUri);
@@ -193,8 +201,12 @@ public class ApiBaseTest extends ReportingBaseTest {
                 sanitized.append(':').append(uri.getPort());
             }
 
-            if (uri.getRawPath() != null) {
-                sanitized.append(uri.getRawPath());
+            String rawPath = uri.getRawPath();
+
+            if (rawPath != null && !rawPath.isEmpty()) {
+                sanitized.append(
+                        "/[PATH REDACTED]"
+                );
             }
 
             String rawQuery = uri.getRawQuery();
@@ -257,16 +269,45 @@ public class ApiBaseTest extends ReportingBaseTest {
         return sanitized.toString();
     }
 
+    /**
+     * Accept standard JSON and application-specific +json media types.
+     * Reject lookalikes such as application/jsonp or text/notjson.
+     */
+    static boolean isJsonContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return false;
+        }
+
+        String mediaType = contentType
+                .split(";", 2)[0]
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        int slashIndex = mediaType.indexOf('/');
+
+        if (slashIndex <= 0
+                || slashIndex != mediaType.lastIndexOf('/')) {
+            return false;
+        }
+
+        String type = mediaType.substring(0, slashIndex).trim();
+        String subtype = mediaType.substring(slashIndex + 1).trim();
+
+        if (!"application".equals(type) || subtype.isEmpty()) {
+            return false;
+        }
+
+        return "json".equals(subtype)
+                || (subtype.length() > 5 && subtype.endsWith("+json"));
+    }
+
     private static String safeErrorResponseDetails(
             Response response,
             String contentType) {
 
-        if (contentType == null
-                || !contentType.toLowerCase(Locale.ROOT)
-                        .contains("json")) {
-
-            return "Response body omitted because it is not identified "
-                    + "as JSON.";
+        if (!isJsonContentType(contentType)) {
+            return "Response body omitted because its Content-Type "
+                    + "is not an accepted JSON media type.";
         }
 
         return sanitizeErrorResponseBody(response.asString());
