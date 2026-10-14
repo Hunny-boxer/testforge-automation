@@ -1,5 +1,6 @@
-
 package com.hunny.testforge.driver;
+
+import java.util.function.Supplier;
 
 import com.hunny.testforge.config.ConfigManager;
 import org.openqa.selenium.WebDriver;
@@ -19,21 +20,46 @@ public class DriverFactory {
     }
 
     public static void initializeDriver(String browser) {
-        if ("chrome".equalsIgnoreCase(browser)) {
-            ChromeOptions options = new ChromeOptions();
+        initializeDriver(browser, DriverFactory::createChromeDriver);
+    }
 
-            options.addArguments("--headless=new");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--disable-gpu");
-            options.addArguments("--window-size=1920,1080");
+    // Package-private overload allows lifecycle tests without launching Chrome.
+    static void initializeDriver(
+            String browser,
+            Supplier<WebDriver> driverSupplier) {
 
-            driver = new ChromeDriver(options);
-        } else {
+        if (!"chrome".equalsIgnoreCase(browser)) {
             throw new IllegalArgumentException(
                     "Unsupported browser: " + browser
             );
         }
+
+        // Close any existing session before replacing it.
+        if (driver != null) {
+            quitDriver();
+        }
+
+        WebDriver newDriver = driverSupplier.get();
+
+        if (newDriver == null) {
+            throw new IllegalStateException(
+                    "Driver supplier returned null"
+            );
+        }
+
+        driver = newDriver;
+    }
+
+    private static WebDriver createChromeDriver() {
+        ChromeOptions options = new ChromeOptions();
+
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--window-size=1920,1080");
+
+        return new ChromeDriver(options);
     }
 
     public static WebDriver getDriver() {
